@@ -371,10 +371,10 @@
     terrainGroup.add(labelsGroup);
 
     const HUD_RADIUS = 12.8;
-    const WIDTH = 22;
-    const DEPTH = 12.5;
-    const NX = 154;
-    const NZ = 92;
+    const WIDTH = 38;
+    const DEPTH = 24;
+    const NX = 228;
+    const NZ = 144;
     const HEIGHT_SCALE = 3.8;
     const BASE_Y = -0.12;
 
@@ -388,18 +388,25 @@
     }
 
     function rawHeight(x, z) {
-      const northSlope = 0.12 * ((z + DEPTH / 2) / DEPTH);
-      const sandboxPeak = gauss(x, z, -1.35, 3.45, 2.0, 1.25, 1.35);
-      const yoloRidge = gauss(x, z, 4.7, 3.55, 3.6, 0.75, 0.68);
-      const rateLimitKnoll = gauss(x, z, 7.1, -1.1, 1.35, 1.1, 0.72);
-      const leftHighlands = gauss(x, z, -8.6, 2.55, 1.9, 2.5, 0.62);
-      const rootContextPoint = gauss(x, z, 0.1, -5.2, 2.8, 0.85, 0.32);
-      const lakeBasin = gauss(x, z, -0.25, -1.65, 6.2, 1.7, -0.58);
-      const claudeValley = gauss(x, z, -8.6, -1.55, 2.3, 1.3, -0.26);
-      const streamCuts = -0.08 * Math.exp(-Math.abs(Math.sin((x + 1.7) * 0.65) - z * 0.08) * 5.0);
-      const ridgeTexture = 0.055 * Math.sin(x * 1.55 + z * 0.9) + 0.034 * Math.sin(x * 3.25 - z * 1.55);
-      const fineTexture = 0.018 * Math.sin((x + z) * 6.0) + 0.014 * Math.cos((x * 2.5 - z * 4.6));
-      return 0.2 + northSlope + sandboxPeak + yoloRidge + rateLimitKnoll + leftHighlands + rootContextPoint + lakeBasin + claudeValley + streamCuts + ridgeTexture + fineTexture;
+      const northSlope = 0.10 * ((z + DEPTH / 2) / DEPTH);
+      const sandboxPeak = gauss(x, z, -2, 6, 2.4, 1.6, 1.35);
+      const yoloRidge = gauss(x, z, 9, 6.5, 4.6, 1.1, 0.72);
+      const networkForest = gauss(x, z, 15, 2.5, 2.6, 2.2, 0.6);
+      const rateLimitKnoll = gauss(x, z, 12, -2, 1.9, 1.5, 0.7);
+      const leftHighlands = gauss(x, z, -15, 4, 2.8, 3.4, 0.72);
+      const rootContextPoint = gauss(x, z, 0.2, -9, 3.6, 1.2, 0.36);
+      const lakeBasin = gauss(x, z, -1, -3, 9.5, 2.6, -0.6);
+      const claudeValley = gauss(x, z, -14, -3, 3.4, 1.9, -0.3);
+      const eastRidge = gauss(x, z, 16.5, 6, 3.0, 1.4, 0.6);
+      const farNorthPeak = gauss(x, z, 3, 10.5, 2.2, 1.5, 0.82);
+      const southHill = gauss(x, z, 8, -8.5, 2.6, 1.7, 0.55);
+      const westBasin = gauss(x, z, -10, 8, 3.2, 1.6, -0.3);
+      const knollA = gauss(x, z, -7, -8, 1.9, 1.4, 0.5);
+      const knollB = gauss(x, z, -17, -6, 2.2, 1.7, 0.5);
+      const streamCuts = -0.06 * Math.exp(-Math.abs(Math.sin((x + 1.7) * 0.5) - z * 0.05) * 5.0);
+      const ridgeTexture = 0.05 * Math.sin(x * 0.9 + z * 0.6) + 0.03 * Math.sin(x * 1.9 - z * 1.1);
+      const fineTexture = 0.016 * Math.sin((x + z) * 3.2) + 0.012 * Math.cos((x * 1.5 - z * 2.6));
+      return 0.2 + northSlope + sandboxPeak + yoloRidge + networkForest + rateLimitKnoll + leftHighlands + rootContextPoint + lakeBasin + claudeValley + eastRidge + farNorthPeak + southHill + westBasin + knollA + knollB + streamCuts + ridgeTexture + fineTexture;
     }
 
     const values = [];
@@ -591,7 +598,7 @@
         });
 
         for (const polyline of polylines) {
-          if (created > 720) break;
+          if (created > 1600) break;
           if (lineLength(polyline) < (major ? 0.65 : 0.9)) continue;
 
           const closed = keyOf(polyline[0]) === keyOf(polyline[polyline.length - 1]);
@@ -702,12 +709,12 @@
 
     function addLabelsAndMarkers() {
       const landmarks = [
-        { text: 'Sandbox Peak', x: -1.35, z: 3.45, color: 0xC0702E, width: 3.2, target: true },
-        { text: 'YOLO Ridge', x: 4.75, z: 3.75, color: 0x7A5E34, width: 2.8 },
-        { text: 'Network Policies Forest', x: 8.05, z: 1.65, color: 0x7A5E34, width: 4.1 },
-        { text: 'MicroVM Lake', x: 0.35, z: -1.75, color: 0x7A5E34, width: 3.0 },
-        { text: 'Claude Pines Valley', x: -8.6, z: -1.55, color: 0x7A5E34, width: 3.8 },
-        { text: 'Rate Limit Knoll', x: 7.15, z: -1.1, color: 0x7A5E34, width: 3.3 }
+        { text: 'Sandbox Peak', x: -2, z: 6, color: 0xC0702E, width: 3.2, target: true },
+        { text: 'YOLO Ridge', x: 9, z: 6.5, color: 0x7A5E34, width: 2.8 },
+        { text: 'Network Policies Forest', x: 15, z: 2.5, color: 0x7A5E34, width: 4.1 },
+        { text: 'MicroVM Lake', x: -1, z: -3, color: 0x7A5E34, width: 3.0 },
+        { text: 'Claude Pines Valley', x: -14, z: -3, color: 0x7A5E34, width: 3.8 },
+        { text: 'Rate Limit Knoll', x: 12, z: -2, color: 0x7A5E34, width: 3.3 }
       ];
 
       for (const item of landmarks) {
@@ -859,7 +866,7 @@
     // ── live sandboxes: clickable dots on the map + detail card ──
     const SANDBOXES = [
       {
-        name: 'claude-den-landing', x: -3.8, z: 0.4, av: 'CD', tint: '#C0702E', icon: 'box', agentKey: 'claude', bg: '#F6E4C9', fg: '#B96C29',
+        name: 'claude-den-landing', x: -5, z: 1, av: 'CD', tint: '#C0702E', icon: 'box', agentKey: 'claude', bg: '#F6E4C9', fg: '#B96C29',
         status: 'Running', state: 'run', uptime: '8h 47m', agent: 'Claude Code',
         memory: 'max 32g', branch: 'no isolation',
         workspace: '/Users/javieralonso/Code/den-landing',
@@ -873,7 +880,7 @@
         ]
       },
       {
-        name: 'feral-cosmos', x: 3.0, z: -0.2, av: 'FC', tint: '#6F6E3E', icon: 'server', agentKey: 'codex', bg: '#D9E7E3', fg: '#3E7C74',
+        name: 'feral-cosmos', x: 4, z: 0, av: 'FC', tint: '#6F6E3E', icon: 'server', agentKey: 'codex', bg: '#D9E7E3', fg: '#3E7C74',
         status: 'Running', state: 'run', uptime: '6m 31s', agent: 'Codex',
         memory: 'max 16g', branch: 'main',
         workspace: '/Users/javieralonso/Code/api-gateway',
@@ -886,7 +893,7 @@
         ]
       },
       {
-        name: 'electric-satellite', x: -6.8, z: 1.6, av: 'ES', tint: '#7B6A9E', icon: 'terminal', agentKey: 'gemini', bg: '#E7E0F0', fg: '#7166A0',
+        name: 'electric-satellite', x: -11, z: 4, av: 'ES', tint: '#7B6A9E', icon: 'terminal', agentKey: 'gemini', bg: '#E7E0F0', fg: '#7166A0',
         status: 'Waiting for you', state: 'wait', uptime: '2h 03m', agent: 'Gemini CLI',
         memory: 'max 8g', branch: 'feat/onboarding',
         workspace: '/Users/javieralonso/Code/den-landing',
@@ -898,7 +905,7 @@
         ]
       },
       {
-        name: 'lively-canyon', x: 5.2, z: -3.2, av: 'LC', tint: '#3E7C74', icon: 'boxes', agentKey: 'claude', bg: '#F1DFE3', fg: '#A65A6E',
+        name: 'lively-canyon', x: 8, z: -3, av: 'LC', tint: '#3E7C74', icon: 'boxes', agentKey: 'claude', bg: '#F1DFE3', fg: '#A65A6E',
         status: 'Idle', state: 'idle', uptime: '—', agent: 'Claude Code',
         memory: 'max 16g', branch: 'no isolation',
         workspace: '/Users/javieralonso/Code/sbx-cli',
@@ -907,6 +914,54 @@
         preset: 'balanced',
         rules: [
           { name: 'kit:corporate', scope: 'all sandboxes · local', chips: ['*.docker.com:443', 'registry-1.docker.io'] }
+        ]
+      },
+      {
+        name: 'hidden-satellite', x: 14, z: 4, av: 'HS', tint: '#8A6D3C', icon: 'boxes', agentKey: 'codex', bg: '#EFE6D2', fg: '#8A6D3C',
+        status: 'Running', state: 'run', uptime: '41m', agent: 'Codex',
+        memory: 'max 16g', branch: 'agentic-platform-ff',
+        workspace: '/Users/javieralonso/Code/platform',
+        kits: ['corporate', 'design'],
+        ports: [{ from: 8080, to: 8080, proto: 'TCP' }],
+        preset: 'balanced',
+        rules: [
+          { name: 'kit:base', scope: 'all sandboxes · local', chips: ['registry.npmjs.org', 'github.com:443'] }
+        ]
+      },
+      {
+        name: 'mossy-harbor', x: -2, z: -7, av: 'MH', tint: '#5E8A6A', icon: 'terminal', agentKey: 'gemini', bg: '#DDE8DE', fg: '#3F7358',
+        status: 'Waiting for you', state: 'wait', uptime: '1h 12m', agent: 'Gemini CLI',
+        memory: 'max 8g', branch: 'main',
+        workspace: '/Users/javieralonso/Code/harbor',
+        kits: ['claude'],
+        ports: [],
+        preset: 'deny',
+        rules: [
+          { name: 'default-deny', scope: 'all sandboxes · local', chips: ['(allowlist only)'] }
+        ]
+      },
+      {
+        name: 'amber-thicket', x: 1, z: 9, av: 'AT', tint: '#C08A3A', icon: 'box', agentKey: 'claude', bg: '#F6E7C6', fg: '#B07A2C',
+        status: 'Running', state: 'run', uptime: '3h 58m', agent: 'Claude Code',
+        memory: 'max 32g', branch: 'no isolation',
+        workspace: '/Users/javieralonso/Code/thicket',
+        kits: ['corporate', 'design', 'claude'],
+        ports: [{ from: 5173, to: 5173, proto: 'TCP' }],
+        preset: 'allow',
+        rules: [
+          { name: 'default-allow-all', scope: 'all sandboxes · local', chips: ['**'] }
+        ]
+      },
+      {
+        name: 'quiet-fjord', x: 16, z: -1, av: 'QF', tint: '#6B7BA6', icon: 'server', agentKey: 'codex', bg: '#E1E5F0', fg: '#5E6E9E',
+        status: 'Idle', state: 'idle', uptime: '—', agent: 'Codex',
+        memory: 'max 16g', branch: 'feat/ports',
+        workspace: '/Users/javieralonso/Code/fjord',
+        kits: ['claude'],
+        ports: [{ from: 4000, to: 4000, proto: 'TCP' }],
+        preset: 'balanced',
+        rules: [
+          { name: 'sandbox:quiet-fjord', scope: 'sandbox · local', chips: ['api.openai.com:443'] }
         ]
       }
     ];
