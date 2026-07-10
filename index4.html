@@ -845,6 +845,11 @@
     controls.autoRotate = false;
     controls.enableZoom = false;
     controls.enableRotate = false;
+    controls.enablePan = true;
+    controls.screenSpacePanning = true;
+    controls.panSpeed = 0.9;
+    controls.mouseButtons = { LEFT: THREE.MOUSE.PAN, MIDDLE: THREE.MOUSE.PAN, RIGHT: THREE.MOUSE.PAN };
+    controls.touches = { ONE: THREE.TOUCH.PAN, TWO: THREE.TOUCH.PAN };
     controls.autoRotateSpeed = 0.38;
 
     const terrainGroup = new THREE.Group();
@@ -1642,6 +1647,8 @@
     let scrollT = 0.5, scrollEase = 0.5;
     const camA = new THREE.Vector3(0.15, 13.40, -9.0);
     const camB = new THREE.Vector3(0.15, 8.90, -14.15);
+    const baseTarget = new THREE.Vector3(0, 0.8, 0);
+    const _base = new THREE.Vector3(), _panOff = new THREE.Vector3();
     function onScrollRotate() {
       const r = scrollSection.getBoundingClientRect();
       const center = r.top + r.height / 2;
@@ -1654,8 +1661,11 @@
     function animate() {
       const t = clock.getElapsedTime();
       scrollEase += (scrollT - scrollEase) * 0.08;
-      camera.position.lerpVectors(camA, camB, scrollEase);
-      controls.update();
+      controls.update();                          // applies drag-to-pan (moves target)
+      _panOff.copy(controls.target).sub(baseTarget);
+      _base.lerpVectors(camA, camB, scrollEase);  // scroll sets the vantage
+      camera.position.copy(_base).add(_panOff);   // compose vantage + pan
+      camera.lookAt(controls.target);
       positionDots();
       updateRoutes(t);
 
