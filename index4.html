@@ -240,7 +240,7 @@
   }
   .engine-head p{max-width:42ch;color:var(--ink-soft);font-size:15.5px;margin-top:16px;line-height:1.6;}
 
-  .diagram{position:relative;z-index:1;width:102vw;margin-left:calc(50% - 51vw);aspect-ratio:2.4/1;margin-top:-96px;overflow:hidden;background:transparent;}
+  .diagram{position:relative;z-index:1;width:102vw;margin-left:calc(50% - 51vw);aspect-ratio:3/1;margin-top:-40px;overflow:hidden;background:transparent;}
 
   /* ---------- product sections ---------- */
   .prod{padding:110px 0;}
@@ -378,7 +378,7 @@
     .pillar-grid{grid-template-columns:1fr;}
     .prod-grid,.prod-grid.flip{grid-template-columns:1fr;gap:38px;}
     .prod-grid.flip .mock{order:0;}
-    .diagram{width:100vw;margin-left:calc(50% - 50vw);aspect-ratio:1/1;}
+    .diagram{width:100vw;margin-left:calc(50% - 50vw);aspect-ratio:1.5/1;}
     .footer-cols{grid-template-columns:1fr 1fr;padding:26px 24px;gap:24px 20px;}
     .footer-inner{padding-bottom:300px;}
   }
@@ -1680,6 +1680,8 @@
       _base.lerpVectors(camA, camB, scrollEase);  // scroll sets the vantage
       camera.position.copy(_base).add(_panOff);   // compose vantage + pan
       camera.lookAt(controls.target);
+      // push the rendered view down (headroom so top dens clear the heading and don't clip)
+      camera.setViewOffset(app.clientWidth, app.clientHeight, 0, -110, app.clientWidth, app.clientHeight);
       if (contourTiles) {                          // recenter the tiled terrain under the camera
         contourTiles.position.x = Math.round(controls.target.x / WIDTH) * WIDTH;
         contourTiles.position.z = Math.round(controls.target.z / DEPTH) * DEPTH;
