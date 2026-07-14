@@ -1308,7 +1308,8 @@
 
   // ── point the download buttons at the latest release asset for the visitor's OS ──
   // Buttons default to the /releases/latest page; this upgrades them to the direct
-  // .dmg (macOS) or .exe (Windows) of whatever the newest release is.
+  // .dmg (macOS) or .exe (Windows) of whatever the newest release is, and appends
+  // the release tag to each label ("Download v0.6.1").
   (async () => {
     const btns = [...document.querySelectorAll('a.btn[href*="/releases/latest"]')];
     if (!btns.length) return;
@@ -1321,11 +1322,17 @@
       const t = [...heroBtn.childNodes].find((n) => n.nodeType === 3 && n.textContent.trim());
       if (t) t.textContent = 'Download for ' + osLabel;
     }
-    if (!isMac && !isWin) return;
     try {
       const res = await fetch('https://api.github.com/repos/jalonsogo/den/releases/latest', { headers: { Accept: 'application/vnd.github+json' } });
       if (!res.ok) return;
-      const assets = (await res.json()).assets || [];
+      const rel = await res.json();
+      const tag = rel.tag_name || '';
+      if (tag) btns.forEach((b) => {
+        const t = [...b.childNodes].find((n) => n.nodeType === 3 && n.textContent.trim());
+        if (t) t.textContent = t.textContent.trim() + ' ' + tag;
+      });
+      if (!isMac && !isWin) return;
+      const assets = rel.assets || [];
       const asset = isMac
         ? (assets.find((a) => /\.dmg$/i.test(a.name)) || assets.find((a) => /mac.*\.zip$/i.test(a.name)))
         : assets.find((a) => /\.exe$/i.test(a.name));
