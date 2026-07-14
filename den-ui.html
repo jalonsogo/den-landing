@@ -5317,6 +5317,8 @@ mq.addEventListener('change', () => { if (state.themePref === 'system') applyThe
 addEventListener('message', (e) => {
   const t = e.data && e.data.denTheme;
   if (t === 'dark' || t === 'light' || t === 'system') applyThemePref(t);
+  const c = e.data && e.data.denColorTheme;
+  if (c && THEMES.some((x) => x.id === c)) { state.colorTheme = c; applyColorTheme(); render(); }
 });
 window.den = {
   setTheme: applyThemePref,
