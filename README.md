@@ -4,24 +4,39 @@
 
 <h1 align="center">den — landing page</h1>
 
-<p align="center">Let your AI agents run full YOLO, safely.</p>
+<p align="center">Somewhere safe to let agents run wild.</p>
 
 ---
 
-Marketing landing page for **den**, which runs any AI coding agent inside a
-disposable, network-policed box. Give Claude, Codex, Gemini, Antigravity, or any
-agent its own isolated microVM — a private Docker daemon, filesystem, and network,
-sealed off from your machine. Turn off the guardrails, stop babysitting
-yes / no / cancel prompts, and let it run unattended with zero blast radius.
+Marketing landing page for **den**, the app for [Docker Sandboxes](https://docs.docker.com/ai/sandboxes/).
+den gives every coding agent a sandbox of its own — a private microVM with its own
+filesystem, daemon, and guarded network — so it can build, install, and rewrite
+freely while your machine never stirs. This is a single static page with a warm
+"paper" aesthetic, a light/dark theme, and live embeds of the real den UI.
 
 ## Preview
 
 ![den landing page](screenshots/landing.png)
 
+## Highlights
+
+- **Light / dark theme** — toggle in the nav; persists to `localStorage` and respects the OS preference. Applied before first paint to avoid a flash.
+- **Interactive 3D map** — a topographic "den country" (Three.js) of live sandboxes you can drag/pan; click a dot for a detail card. Fog and cards recolor per theme.
+- **Live product embeds** — the real den UI (`den-ui.html`) is embedded and cropped to show:
+  - the **sandbox list** (with a cursor tapping "＋ new sandbox"),
+  - the **network policy** panel (with a looping "add rule" animation),
+  - a **kit's capabilities** (Remote MCPs, network, env vars, agent memory).
+  These stay in sync with the site theme.
+- **Shuffling hero art** — click the hero pill to fade in a random header from `resources/headers/`. Drop any image into that folder and it's picked up automatically when served over HTTP.
+- **FAQ** — plain-English accordions (one open at a time) summarized from the docs, each linking to the relevant page.
+- **Download buttons** — resolve to the latest GitHub release for the visitor's OS (`.dmg` / `.exe`) via the GitHub API, falling back to the releases page.
+- **Responsive** — mobile hamburger nav and a shorter hero mockup on small screens.
+
 ## Getting started
 
-This is a static site — no build step required. Open `index.html` directly, or
-serve it locally:
+Static site, no build step. It relies on `fetch`/iframes, so **serve it over HTTP**
+(some features — the header folder-listing, the live embeds — don't work from a
+raw `file://` open):
 
 ```bash
 python3 -m http.server 8000
@@ -32,8 +47,15 @@ python3 -m http.server 8000
 
 | Path | Description |
 | --- | --- |
-| `index.html` | The landing page |
-| `mockup.html` | Earlier full mockup |
-| `explorations/` | Design explorations and alternate versions |
-| `resources/` | Logo, icons, and brand-mono agent logos |
-| `screenshots/` | App and landing page screenshots |
+| `index.html` | The landing page (the current, canonical version) |
+| `den-ui.html` | The interactive den app demo, embedded live in the page. Accepts `?theme=light\|dark`, `?color=`, and `?embed=network\|kit` |
+| `microvm-lake.html` | Standalone version of the 3D map exploration |
+| `resources/` | Logo, icons, brand-mono agent logos, and `headers/` (swappable hero art) |
+| `screenshots/` | App and landing-page screenshots |
+| `LICENSE.md` | FSL-1.1-Apache-2.0 (fair-source) |
+
+## License
+
+Released under the **Functional Source License (FSL-1.1-Apache-2.0)** — fair-source:
+use, modify, and self-host it freely, just not to build a competing product. Each
+release converts to Apache 2.0 two years after publication. See [`LICENSE.md`](LICENSE.md).

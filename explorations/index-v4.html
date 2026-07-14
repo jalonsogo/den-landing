@@ -3,15 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>den. Let your AI agents run full YOLO, safely</title>
-  <meta name="description" content="den runs any AI coding agent inside a disposable, network-policed box. Stop babysitting yes / no / cancel prompts. Turn off the guardrails and let Claude, Codex, Gemini, Antigravity, or any agent run unattended.">
-  <meta property="og:title" content="den. Let your AI agents run full YOLO, safely">
-  <meta property="og:description" content="Ephemeral, isolated sandboxes you control with your own policies and tools. Full support for Codex, Antigravity, Claude, OpenCode and more.">
-  <meta property="og:image" content="screenshots/app-home.png">
-  <meta property="og:type" content="website">
+  <title>den. — full YOLO, zero blast radius</title>
+  <meta name="description" content="den runs any AI coding agent inside a disposable, network-policed box.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700;800&family=Sora:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
   <script type="importmap">
   {
     "imports": {
@@ -23,1611 +19,901 @@
   <style>
     *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
-    /* Monochrome palette matched to the den app icon (charcoal + white). */
     :root {
-      --sand-0:      #FAFAFA;
-      --sand-1:      #F4F4F5;
-      --sand-2:      #E4E4E7;
-      --sand-3:      #D4D4D8;
-      --ocean-deep:  #18181B;
-      --ocean-mid:   #2B2E36;
-      --ocean-bright:#3F3F46;
-      --ocean-sky:   #D4D4D8;
-      --coral:       #26272E;
-      --coral-light: #3F3F46;
-      --coral-pale:  #F4F4F5;
-      --navy:        #18181B;
-      --text-dark:   #18181B;
-      --text-mid:    #52525B;
-      --text-light:  #A1A1AA;
-      --white:       #FFFFFF;
-      /* ember: the warm accent glowing inside the crystal */
-      --ember:       #FF7A18;
-      --ember-soft:  #FF9A3C;
-      --ink:         #08080A;
-      /* dark-mode surfaces */
-      --surface-0:   #08080A;   /* page / deepest */
-      --surface-1:   #0C0D11;   /* raised section */
-      --card:        #131419;   /* card / tile */
-      --card-2:      #17181E;
-      --line:        rgba(255,255,255,0.08);
-      --line-2:      rgba(255,255,255,0.12);
-      --text-hi:     #F5F5F6;
-      --text-lo:     rgba(255,255,255,0.62);
-      --text-lo2:    rgba(255,255,255,0.42);
-      /* type: Sora (display) × Rubik (body) — chosen in the hero explorer */
-      --font-head:   'Sora', sans-serif;
-      --font-body:   'Rubik', sans-serif;
+      --paper:   #E7E6E0;   /* light engineering paper */
+      --paper-2: #EFEEE8;
+      --card:    #F8F7F3;   /* card / plate surface */
+      --ink:     #15150F;   /* near-black text + linework */
+      --ink-2:   #3B3B34;
+      --muted:   #83837A;
+      --muted-2: #ADACA2;
+      --line:    rgba(0,0,0,0.16);
+      --line-2:  rgba(0,0,0,0.10);
+      --grid:    rgba(0,0,0,0.045);
+      --tick:    rgba(0,0,0,0.17);
+      --ember-rgb: 255,106,26;
+      --ember:   rgb(var(--ember-rgb));
+      --lab: #1c9d6b;                          /* annotation green, poster-style */
+      --font-disp: 'Chakra Petch', sans-serif; /* squared technical display */
+      --font-mono: 'Space Mono', monospace;
+      --font-body: 'Space Grotesk', sans-serif;
+      --page-max: 1152px;                      /* 18 modules; half-width = 9 modules so edges land on gridlines */
+      --gutter:   clamp(24px, 5vw, 64px);      /* one module at wide viewports → inner content stays on the grid */
+      --step: 64px;                            /* grid module */
+      --r:    14px;                            /* cards, panels, window, nav */
+      --r-md: 10px;                            /* buttons, inputs, menus */
+      --r-sm: 7px;                             /* chips, tags, small controls */
     }
 
     html { scroll-behavior: smooth; }
-
     body {
       font-family: var(--font-body);
-      background: var(--surface-0);
-      color: var(--text-hi);
+      background: var(--paper);
+      color: var(--ink);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
       overflow-x: hidden;
+      line-height: 1.55;
+      position: relative;
     }
+
+    /* ─── GRID + CROSSHAIR BACKPLATE ─── */
+    /* Absolute (not fixed) so it scrolls locked to the content, and the tile's
+       centre line/tick sits at x = 50% of the page. Because the content column
+       is centred and its half-width is a whole number of modules, its edges land
+       exactly on gridlines. */
+    .backplate {
+      position: absolute; inset: 0; z-index: 0; pointer-events: none;
+      background:
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64'%3E%3Cpath d='M32 0V64 M0 32H64' stroke='rgba(0,0,0,0.05)' stroke-width='1'/%3E%3Cpath d='M32 26V38 M26 32H38' stroke='rgba(0,0,0,0.17)' stroke-width='1'/%3E%3C/svg%3E");
+      background-repeat: repeat;
+      background-position: center top;   /* 50% phase → a gridline falls on the page centre */
+      background-size: var(--step) var(--step);
+    }
+    /* thin device frame around the whole screen */
+    .bezel { position: fixed; inset: 9px; z-index: 1; pointer-events: none;
+      border: 1.5px solid rgba(0,0,0,0.22); border-radius: 20px; }
+    .bezel::before, .bezel::after { content: ''; position: absolute; }
+    /* reticle top-right + × top-left, echoing the reference chrome */
+    .screen-mark { position: fixed; z-index: 3; pointer-events: none; color: var(--ink);
+      width: 22px; height: 22px; }
+    .screen-mark svg { width: 100%; height: 100%; opacity: 0.7; }
+    .screen-mark.tl { top: 20px; left: 20px; }
+    .screen-mark.tr { top: 20px; right: 20px; }
+    @media (max-width: 640px){ .screen-mark { display: none; } }
+
+    .wrap { max-width: var(--page-max); margin: 0 auto; padding-inline: var(--gutter); }
+
+    /* reusable corner brackets — rounded elbows nudged just outside the box so
+       they read as focus ticks hugging the rounded corner */
+    .brk { position: relative; }
+    .brk > .c { position: absolute; width: 15px; height: 15px; border: 1.5px solid var(--ink); z-index: 4; }
+    .brk > .c.tl { top: -6px; left: -6px; border-right: 0; border-bottom: 0; border-top-left-radius: 9px; }
+    .brk > .c.tr { top: -6px; right: -6px; border-left: 0; border-bottom: 0; border-top-right-radius: 9px; }
+    .brk > .c.bl { bottom: -6px; left: -6px; border-right: 0; border-top: 0; border-bottom-left-radius: 9px; }
+    .brk > .c.br { bottom: -6px; right: -6px; border-left: 0; border-top: 0; border-bottom-right-radius: 9px; }
+
+    /* mono kicker/label used everywhere */
+    .kick { font-family: var(--font-mono); font-size: 11px; font-weight: 700;
+      letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted); }
+    .kick .em { color: var(--ember); }
+    .sq { display: inline-block; width: 8px; height: 8px; background: var(--ember); flex: none; }
 
     /* ─── NAV ─── */
     nav {
-      position: fixed;
-      top: 0; left: 0; right: 0;
-      z-index: 100;
-      padding: 18px 52px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      background: linear-gradient(
-        135deg,
-        rgba(16, 16, 20, 0.55) 0%,
-        rgba(12, 12, 16, 0.42) 50%,
-        rgba(16, 16, 20, 0.55) 100%
-      );
-      backdrop-filter: blur(24px) saturate(150%);
-      -webkit-backdrop-filter: blur(24px) saturate(150%);
-      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-      box-shadow:
-        0 1px 0 rgba(255, 255, 255, 0.04),
-        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+      position: fixed; top: 16px; left: 0; right: 0; z-index: 50;
+      width: min(100% - 48px, var(--page-max)); margin-inline: auto;   /* same column as content → edges on gridlines */
+      display: grid; grid-template-columns: 1fr auto 1fr; align-items: center;
+      padding: 10px 12px 10px 16px;
+      background: rgba(240,239,233,0.82);
+      border: 1px solid var(--line);
+      border-radius: var(--r);
+      backdrop-filter: blur(14px) saturate(130%);
+      -webkit-backdrop-filter: blur(14px) saturate(130%);
+      transition: background 0.25s, box-shadow 0.25s;
     }
-    nav.scrolled {
-      background: linear-gradient(
-        135deg,
-        rgba(12, 12, 16, 0.82) 0%,
-        rgba(9, 9, 12, 0.74) 50%,
-        rgba(12, 12, 16, 0.82) 100%
-      );
-      box-shadow:
-        0 1px 0 rgba(255, 255, 255, 0.05),
-        0 8px 32px rgba(0, 0, 0, 0.45),
-        inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    nav.scrolled { background: rgba(240,239,233,0.95); box-shadow: 0 12px 30px rgba(0,0,0,0.07); }
+    .nav-logo { justify-self: start; display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--ink); }
+    .nav-mark { width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; }
+    .nav-mark img { width: 26px; height: 26px; }
+    .nav-logo-text { font-family: var(--font-disp); font-size: 21px; font-weight: 700; letter-spacing: -0.01em; }
+    .nav-logo-tag { font-family: var(--font-mono); font-size: 10px; color: var(--muted); letter-spacing: 0.08em; padding-top: 3px; }
+    .nav-links { justify-self: center; display: flex; align-items: center; gap: 4px; list-style: none; margin: 0; }
+    .nav-links a { display: inline-flex; align-items: center; gap: 6px; text-decoration: none;
+      color: var(--ink-2); font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.04em;
+      padding: 7px 12px; transition: color 0.2s, background 0.2s; }
+    .nav-links a:hover { color: var(--ink); background: rgba(0,0,0,0.05); }
+    .nav-links a .caret { width: 9px; height: 9px; opacity: 0.55; }
+    .nav-right { justify-self: end; display: flex; align-items: center; gap: 12px; }
+    .nav-login { text-decoration: none; color: var(--ink); font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.04em; }
+
+    /* rounded buttons, matching the product UI */
+    .notch { border-radius: var(--r-md); }
+    .btn-ember {
+      display: inline-flex; align-items: center; gap: 9px;
+      background: var(--ember); color: #14140f; text-decoration: none;
+      font-family: var(--font-mono); font-size: 12.5px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+      padding: 11px 18px; border: 0; transition: transform 0.18s, filter 0.18s;
     }
-    .nav-logo {
-      display: flex; align-items: center; gap: 11px;
-      text-decoration: none;
+    .btn-ember:hover { transform: translateY(-1px); filter: brightness(1.06); }
+    .btn-ember .cta-ico { width: 16px; height: 16px; object-fit: contain; filter: brightness(0); }
+    .btn-dark {
+      display: inline-flex; align-items: center; gap: 9px;
+      background: var(--ink); color: #fff; text-decoration: none;
+      font-family: var(--font-mono); font-size: 12.5px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+      padding: 11px 18px; transition: transform 0.18s, background 0.18s;
     }
-    .nav-logo img { width: 24px; height: 24px; object-fit: contain; }
-    .nav-logo-text {
-      font-family: var(--font-body);
-      font-size: 21px; font-weight: 600;
-      color: var(--text-hi); letter-spacing: -0.3px;
+    .btn-dark:hover { transform: translateY(-1px); background: #000; }
+    .btn-dark .cta-ico { width: 16px; height: 16px; object-fit: contain; }
+    .btn-ghost {
+      display: inline-flex; align-items: center; gap: 9px;
+      background: transparent; color: var(--ink); text-decoration: none;
+      font-family: var(--font-mono); font-size: 12.5px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+      padding: 11px 18px; border: 1.5px solid var(--ink); transition: background 0.18s, color 0.18s;
     }
-    .nav-links {
-      display: flex; align-items: center;
-      gap: 34px; list-style: none;
-    }
-    .nav-links a {
-      text-decoration: none;
-      color: var(--text-lo);
-      font-size: 14px; font-weight: 500;
-      letter-spacing: 0.01em;
-      transition: color 0.2s;
-    }
-    .nav-links a:hover { color: var(--text-hi); }
-    .nav-cta {
-      background: linear-gradient(135deg, var(--ember-soft) 0%, var(--ember) 100%) !important;
-      color: white !important;
-      padding: 9px 20px;
-      border-radius: 100px;
-      font-weight: 700 !important;
-      box-shadow: 0 2px 16px rgba(255,122,24,0.4);
-      transition: transform 0.2s, box-shadow 0.2s !important;
-    }
-    .nav-cta:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 6px 22px rgba(255,122,24,0.55) !important;
-    }
+    .btn-ghost:hover { background: var(--ink); color: #fff; }
+    .nav-cta { padding: 9px 15px; font-size: 11.5px; }
+
+    /* accent switcher */
+    .accent-wrap { position: relative; display: inline-flex; }
+    .accent-switch { width: 30px; height: 30px; display: inline-flex; align-items: center; justify-content: center;
+      border: 1px solid var(--line); border-radius: var(--r-sm); background: none; cursor: pointer; transition: transform 0.2s; }
+    .accent-switch:hover { transform: translateY(-1px); }
+    .accent-ball { display: block; width: 15px; height: 15px; border-radius: 4px; background: var(--ember);
+      box-shadow: 0 0 8px rgba(var(--ember-rgb),0.6); transition: background 0.3s, box-shadow 0.3s; }
+    .accent-menu { position: absolute; top: calc(100% + 12px); right: 0; min-width: 200px; padding: 6px;
+      background: var(--card); border: 1px solid var(--line); border-radius: var(--r-md);
+      box-shadow: 0 18px 44px rgba(0,0,0,0.16); display: flex; flex-direction: column; gap: 2px;
+      opacity: 0; visibility: hidden; transform: translateY(-6px); transform-origin: top right;
+      transition: opacity 0.18s ease, transform 0.18s ease, visibility 0.18s; z-index: 60; }
+    .accent-menu.open { opacity: 1; visibility: visible; transform: none; }
+    .accent-opt { display: flex; align-items: center; gap: 10px; padding: 8px 10px;
+      border: 0; background: none; cursor: pointer; width: 100%; font-family: var(--font-mono);
+      font-size: 12px; letter-spacing: 0.03em; color: var(--ink-2); text-align: left; transition: background 0.15s, color 0.15s; }
+    .accent-opt { border-radius: var(--r-sm); }
+    .accent-opt:hover { background: rgba(0,0,0,0.06); color: var(--ink); }
+    .accent-opt.active { color: var(--ink); }
+    .accent-opt-dot { width: 13px; height: 13px; flex: none; }
+    .accent-opt-check { margin-left: auto; color: var(--ember); opacity: 0; font-size: 12px; }
+    .accent-opt.active .accent-opt-check { opacity: 1; }
 
     /* ─── HERO ─── */
-    .hero {
-      display: flex;
-      flex-direction: column;
-      align-items: flex-start;
-      justify-content: center;
-      text-align: left;
-      min-height: 100vh;
-      min-height: 100svh;
-      padding: 150px 6vw 120px;
-      position: relative;
-      overflow: hidden;
-      background:
-        radial-gradient(ellipse 70% 55% at 50% 60%, rgba(255,122,24,0.10) 0%, transparent 60%),
-        radial-gradient(ellipse 90% 70% at 50% 120%, rgba(255,122,24,0.08) 0%, transparent 55%),
-        linear-gradient(180deg, #0B0B0F 0%, #08080A 55%, #050506 100%);
-    }
-    /* Full-bleed WebGL crystal scene sits behind the copy. */
-    .hero-canvas {
-      position: absolute; inset: 0;
-      width: 100%; height: 100%;
-      display: block; z-index: 0;
-      opacity: 0;
-      transition: opacity 1.2s ease;
-    }
-    .hero-canvas.lit { opacity: 1; }
-    /* Legibility scrim over the scene. */
-    .hero-scrim {
-      position: absolute; inset: 0; z-index: 1; pointer-events: none;
-      background:
-        radial-gradient(ellipse 65% 85% at 22% 52%, rgba(5,5,7,0.74) 0%, transparent 60%),
-        linear-gradient(90deg, rgba(6,6,8,0.72) 0%, rgba(6,6,8,0.36) 34%, transparent 62%),
-        linear-gradient(180deg, rgba(6,6,8,0.5) 0%, transparent 28%, transparent 62%, rgba(5,5,6,0.6) 100%);
-    }
-    /* fine grain over the whole stage */
-    .hero-scrim::after {
-      content: '';
-      position: absolute; inset: 0;
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
-      opacity: 0.5;
-    }
-    .hero-copy {
-      display: flex;
-      flex-direction: column;
-      align-items: flex-start;
-      max-width: min(720px, 92vw);
-      position: relative;
-      z-index: 2;
-    }
+    .hero { position: relative; z-index: 2; padding: 160px 0 64px; }
+    /* 7fr + gap(1 module) + 8fr = 448 + 64 + 512 across the 1024px content column;
+       every column edge lands on a gridline */
+    .hero-grid { display: grid; grid-template-columns: 7fr 8fr; gap: var(--step); align-items: center; }
 
     .hero-eyebrow {
       display: inline-flex; align-items: center; gap: 9px;
-      background: rgba(255,122,24,0.10);
-      border: 1px solid rgba(255,154,60,0.34);
-      color: var(--ember-soft);
-      font-size: 11px; font-weight: 700;
-      letter-spacing: 0.1em; text-transform: uppercase;
-      padding: 6px 16px 6px 8px; border-radius: 100px;
-      margin-bottom: 30px;
-      backdrop-filter: blur(8px);
-      box-shadow: 0 0 24px rgba(255,122,24,0.18);
-      opacity: 0;
-      animation: fadeUp 0.6s ease forwards 0.15s;
-      position: relative;
+      font-family: var(--font-mono); font-size: 11px; font-weight: 700;
+      letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-2);
+      border: 1px solid var(--line); border-radius: var(--r-md); padding: 7px 13px; margin-bottom: 26px;
     }
-    .hero-eyebrow-logo { width: 18px; height: 18px; object-fit: contain; }
-    /* den mark (icon-light.svg is black) -> render white on the dark UI */
-    .nav-logo img, .hero-eyebrow-logo, .footer-logo img { filter: brightness(0) invert(1); }
+    .hero-eyebrow .em { color: var(--ember); }
+    .hero-h {
+      font-family: var(--font-disp); font-weight: 700; line-height: 0.92;
+      letter-spacing: -0.02em; color: var(--ink); text-transform: uppercase;
+      font-size: clamp(46px, 7.4vw, 108px);
+    }
+    .hero-h .u { color: var(--muted-2); }
+    .hero-h .cur { color: var(--ember); }
+    .hero-sub { max-width: 480px; margin: 24px 0 30px; font-size: 15.5px; color: var(--ink-2); line-height: 1.62; }
+    .hero-actions { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+    .hero-params { margin-top: 30px; display: grid; gap: 5px; max-width: 460px;
+      font-family: var(--font-mono); font-size: 12px; color: var(--ink-2); }
+    .hero-params .row { display: flex; gap: 8px; }
+    .hero-params .k { color: var(--muted); min-width: 118px; }
+    .hero-params .v { color: var(--ink); }
+    .hero-params .c2 { color: var(--muted-2); }
 
-    .hero-title {
-      font-family: var(--font-body);
-      font-size: clamp(44px, 6.6vw, 82px);
-      font-weight: 800;
-      line-height: 1.03;
-      letter-spacing: -0.04em;
-      color: var(--white);
-      margin-bottom: 22px;
-      max-width: 820px;
-      text-shadow: 0 2px 40px rgba(0,0,0,0.5);
-      opacity: 0;
-      animation: fadeUp 0.8s ease forwards 0.3s;
-      position: relative;
+    /* right column: annotated diagram, poster-style */
+    .hero-stage { position: relative; width: 100%; aspect-ratio: 1 / 1; }
+    .hero-stage > .c { position: absolute; width: 20px; height: 20px; border: 1.5px solid var(--ink); z-index: 4; }
+    .hero-stage > .c.tl { top: 0; left: 0; border-right: 0; border-bottom: 0; border-top-left-radius: 10px; }
+    .hero-stage > .c.tr { top: 0; right: 0; border-left: 0; border-bottom: 0; border-top-right-radius: 10px; }
+    .hero-stage > .c.bl { bottom: 0; left: 0; border-right: 0; border-top: 0; border-bottom-left-radius: 10px; }
+    .hero-stage > .c.br { bottom: 0; right: 0; border-left: 0; border-top: 0; border-bottom-right-radius: 10px; }
+    .stage-tag { position: absolute; top: -9px; left: 24px; z-index: 4; background: var(--paper);
+      font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.1em; color: var(--muted); padding: 0 8px; }
+    .stage-tag .em { color: var(--ember); }
+    #heroCube { position: absolute; inset: 0; z-index: 1; }
+    #heroCube canvas { display: block; }
+    .callouts { position: absolute; inset: 0; z-index: 2; pointer-events: none; }
+    .callouts svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+    .callouts svg polyline { fill: none; stroke: var(--lab); stroke-width: 1; vector-effect: non-scaling-stroke; opacity: 0.85; }
+    .callouts svg circle { fill: var(--lab); }
+    /* poster-style boxed coordinate label */
+    .callout {
+      position: absolute; display: inline-flex; flex-direction: column; gap: 3px;
+      font-family: var(--font-mono); white-space: nowrap;
     }
-    .hero-title em {
-      font-style: normal;
-      color: var(--ember-soft);
-      text-shadow: 0 0 46px rgba(255,122,24,0.55);
-    }
+    .callout .code { display: inline-flex; align-items: center; gap: 6px;
+      font-size: 10px; letter-spacing: 0.08em; color: var(--lab);
+      border: 1px solid var(--lab); border-radius: 5px; padding: 2px 6px; align-self: flex-start; }
+    .callout .code img { width: 11px; height: 11px; }
+    .callout .name { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-2); }
+    .callout.tl { left: 1%;  top: 26%; }
+    .callout.r  { right: 0%; top: 35%; align-items: flex-end; }
+    .callout.r .code { align-self: flex-end; }
+    .callout.br { right: 0%; top: 62%; align-items: flex-end; }
+    .callout.br .code { align-self: flex-end; }
+    .callout.bl { left: 1%;  top: 71%; }
 
-    .hero-sub {
-      font-size: 18px; font-weight: 400;
-      color: rgba(255,255,255,0.66);
-      max-width: 560px; line-height: 1.7;
-      margin-bottom: 36px;
-      text-shadow: 0 1px 20px rgba(0,0,0,0.6);
-      opacity: 0;
-      animation: fadeUp 0.8s ease forwards 0.45s;
-      position: relative;
-    }
+    /* vertical edge caption, poster-style */
+    .vcap { position: absolute; right: -6px; top: 50%; transform: translateY(-50%) rotate(180deg);
+      writing-mode: vertical-rl; font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.18em;
+      text-transform: uppercase; color: var(--muted); z-index: 3; }
+    @media (max-width: 1080px){ .vcap { display: none; } }
 
-    .hero-actions {
-      display: flex; gap: 14px; align-items: center;
-      opacity: 0;
-      animation: fadeUp 0.8s ease forwards 0.6s;
-      position: relative;
-    }
+    /* ─── SPEC BAND (logos + stats) ─── */
+    .band { position: relative; z-index: 2; padding: 32px 0 96px; }
+    /* 6 + 6 + 4 modules across the 1024px column → both dividers land on gridlines */
+    .band-card { background: var(--card); border: 1px solid var(--line); border-radius: var(--r);
+      display: grid; grid-template-columns: 6fr 6fr 4fr; }
+    .band-col { padding: 26px 28px; border-right: 1px solid var(--line-2); position: relative; }
+    .band-col:last-child { border-right: 0; }
+    .band-head { display: flex; align-items: center; gap: 8px; margin-bottom: 22px; }
+    .band-logos { display: flex; align-items: center; gap: 20px; flex-wrap: wrap; margin-bottom: 26px; }
+    .band-logos img { height: 20px; width: auto; opacity: 0.82; }
+    .stat-num { font-family: var(--font-disp); font-weight: 700; font-size: 52px; line-height: 1; color: var(--ink); letter-spacing: -0.01em; }
+    .stat-num .em { color: var(--ember); }
+    .stat-label { font-family: var(--font-mono); font-size: 11.5px; color: var(--muted); margin-top: 10px; letter-spacing: 0.03em; }
+    .band-copy { font-family: var(--font-mono); font-size: 12.5px; color: var(--ink-2); margin-bottom: 20px; line-height: 1.6; }
 
-    /* The real product as the hero centerpiece: a live render of den in a
-       floating app window. The mockup ships its own dark UI + traffic-light
-       toolbar, so it just needs a frame, a big shadow and a platform glow. */
-    .hero-shot {
-      position: relative;
-      z-index: 1;
-      width: min(100% - 40px, 1520px);
-      margin: 58px auto 0;
-      opacity: 0;
-      transform: translateY(44px) scale(0.985);
-      animation: fadeUp 1s ease forwards 0.8s;
-    }
-    .hero-shot::before {
-      content: '';
-      position: absolute;
-      left: 50%; bottom: -7%;
-      transform: translateX(-50%);
-      width: 86%; height: 62%;
-      background: radial-gradient(ellipse at center, rgba(24,24,27,0.22) 0%, transparent 70%);
-      filter: blur(46px);
-      z-index: -1;
-    }
-    .app-window {
-      border-radius: 14px;
-      overflow: hidden;
-      background: #0A0B0F;
-      border: 1px solid rgba(255,255,255,0.10);
-      box-shadow:
-        0 0 0 1px rgba(255,122,24,0.06),
-        0 30px 90px rgba(0,0,0,0.6),
-        0 10px 44px rgba(255,122,24,0.12);
-    }
-    .app-frame {
-      display: block;
-      width: 100%;
-      aspect-ratio: 1200 / 760;
-      border: 0;
-      background: #0D1117;
-      /* Fully interactive: click through sandboxes, open New Sandbox, switch
-         themes, browse the library, all live. */
-    }
-    .btn-primary {
-      display: inline-flex; align-items: center; gap: 8px;
-      background: linear-gradient(135deg, var(--ember-soft) 0%, var(--ember) 100%);
-      color: #fff;
-      font-family: var(--font-body);
-      font-size: 15px; font-weight: 700;
-      padding: 14px 30px; border-radius: 100px;
-      text-decoration: none;
-      box-shadow: 0 4px 26px rgba(255,122,24,0.45), inset 0 1px 0 rgba(255,255,255,0.35);
-      transition: all 0.25s;
-    }
-    .btn-primary:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 12px 40px rgba(255,122,24,0.6), inset 0 1px 0 rgba(255,255,255,0.4);
-    }
-    .btn-secondary {
-      display: inline-flex; align-items: center; gap: 8px;
-      color: rgba(255,255,255,0.82);
-      font-family: var(--font-body);
-      font-size: 15px; font-weight: 500;
-      padding: 14px 24px; border-radius: 100px;
-      text-decoration: none;
-      border: 1.5px solid rgba(255,255,255,0.18);
-      background: rgba(255,255,255,0.04);
-      backdrop-filter: blur(6px);
-      transition: all 0.25s;
-    }
-    .btn-secondary:hover {
-      border-color: rgba(255,154,60,0.55);
-      color: #fff;
-      transform: translateY(-2px);
-    }
+    /* ─── FEATURE CARDS (portfolio-style with stat grids) ─── */
+    .feat { position: relative; z-index: 2; padding: 0 0 96px; }
+    .sec-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; margin-bottom: 32px; flex-wrap: wrap; }
+    .sec-title { font-family: var(--font-disp); font-weight: 700; text-transform: uppercase;
+      font-size: clamp(30px, 4.4vw, 62px); line-height: 0.95; letter-spacing: -0.015em; }
+    .sec-title .dim { color: var(--muted-2); }
+    .sec-index { font-family: var(--font-mono); font-size: 12px; color: var(--muted); letter-spacing: 0.06em; text-align: right; }
+    /* each card = 4 modules (256px), each gap = 2 modules (128px): 4+2+4+2+4 = 16.
+       Card edges and the mid stat-divider (at 2 modules) all land on gridlines. */
+    .feat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 128px; }
+    .fcard { background: var(--card); border: 1px solid var(--line); border-radius: var(--r); padding: 0; display: flex; flex-direction: column; }
+    .fcard-top { padding: 20px 20px 18px; }
+    .fcard-tag { display: inline-block; font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.1em;
+      text-transform: uppercase; color: var(--ink-2); border: 1px solid var(--line); border-radius: var(--r-sm); padding: 2px 7px; margin-bottom: 30px; }
+    .fcard-icon { width: 34px; height: 34px; margin-bottom: 14px; color: var(--ember); }
+    .fcard-title { font-family: var(--font-disp); font-size: 21px; font-weight: 600; letter-spacing: -0.01em; margin-bottom: 8px; }
+    .fcard-copy { font-family: var(--font-mono); font-size: 12px; color: var(--ink-2); line-height: 1.62; }
+    .fcard-stats { display: grid; grid-template-columns: 1fr 1fr; border-top: 1px solid var(--line); margin-top: auto; }
+    .fstat { padding: 14px 16px; border-right: 1px solid var(--line-2); border-bottom: 1px solid var(--line-2); }
+    .fstat:nth-child(2n){ border-right: 0; }
+    .fstat:nth-last-child(-n+2){ border-bottom: 0; }
+    .fstat b { display: block; font-family: var(--font-disp); font-size: 22px; font-weight: 700; color: var(--ink); line-height: 1; }
+    .fstat b .em { color: var(--ember); }
+    .fstat span { display: block; font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); margin-top: 6px; }
+    .fcard-foot { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-top: 1px solid var(--line); }
+    .fcard-foot .lbl { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+    .fcard-foot .arw { color: var(--ink); }
 
-    .hero-trust {
-      margin-top: 34px;
-      display: flex; align-items: center; gap: 8px;
-      flex-wrap: wrap; justify-content: flex-start;
-      opacity: 0;
-      animation: fadeUp 0.8s ease forwards 0.7s;
-      position: relative;
-    }
-    .hero-trust-item {
-      display: flex; align-items: center; gap: 6px;
-      font-size: 12.5px; color: rgba(255,255,255,0.42);
-    }
-    .hero-trust-item b { color: var(--ember-soft); font-weight: 600; }
-    .hero-trust-sep {
-      width: 3px; height: 3px; border-radius: 50%;
-      background: rgba(255,255,255,0.2); margin: 0 4px;
-    }
-
-    .hero-scroll-hint {
-      position: absolute; bottom: 26px; left: 0; right: 0;
-      margin-inline: auto; width: max-content;
-      z-index: 2;
-      display: flex; flex-direction: column; align-items: center; gap: 5px;
-      color: rgba(255,255,255,0.4);
-      font-size: 10px; font-weight: 600; letter-spacing: 0.16em;
-      text-transform: uppercase; text-decoration: none;
-      opacity: 0; animation: fadeUp 1s ease forwards 1.4s;
-    }
-    .hero-scroll-hint svg { animation: floatLoop 2.4s ease-in-out infinite; }
-    .hero-scroll-hint:hover { color: var(--ember-soft); }
-
-    /* full-width monochrome agent-logo marquee under the trust row */
-    .hero-agents-label {
-      margin-top: 58px; margin-bottom: 24px;
-      font-size: 11px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase;
-      color: rgba(255,255,255,0.42);
-      position: relative; z-index: 2;
-      opacity: 0; animation: fadeUp 0.8s ease forwards 0.85s;
-    }
-    .hero-agents {
-      width: 100vw; margin-left: -6vw; margin-top: 4px; padding-bottom: 34px;
-      position: relative; z-index: 2; overflow: hidden;
-      -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 10%, #000 90%, transparent 100%);
-              mask-image: linear-gradient(90deg, transparent 0, #000 10%, #000 90%, transparent 100%);
-      opacity: 0; animation: fadeUp 0.8s ease forwards 0.95s;
-    }
-    .agents-track {
-      display: flex; align-items: flex-start; width: max-content;
-      animation: agentsScroll 38s linear infinite;
-    }
-    .hero-agents:hover .agents-track { animation-play-state: paused; }
-    /* spacing via margin-right (not gap) so the duplicated halves tile exactly at -50% */
-    .agent-chip { flex: none; position: relative; display: flex; flex-direction: column; align-items: center; margin-right: 44px; }
-    /* fixed clip window keeps each logo's footprint uniform despite differing viewBox padding */
-    .agent-slot {
-      width: 54px; height: 48px; overflow: hidden;
-      display: flex; align-items: center; justify-content: center;
-    }
-    .agent-slot img {
-      width: auto; display: block;
-      filter: brightness(0) invert(1);
-      opacity: 0.5; transition: opacity 0.2s ease;
-    }
-    .agent-chip:hover .agent-slot img { opacity: 0.95; }
-    /* per-logo heights (measured content bbox) so every mark reads the same size */
-    .agent-slot img[src*="claude"]   { height: 62px; }
-    .agent-slot img[src*="codex"]    { height: 106px; }
-    .agent-slot img[src*="copilot"]  { height: 112px; }
-    .agent-slot img[src*="cursor"]   { height: 112px; }
-    .agent-slot img[src*="docker"]   { height: 38px; }
-    .agent-slot img[src*="droid"]    { height: 109px; }
-    .agent-slot img[src*="gemini"]   { height: 106px; }
-    .agent-slot img[src*="kiro"]     { height: 106px; }
-    .agent-slot img[src*="opencode"] { height: 112px; }
-    .agent-slot img[src*="shell"]    { height: 48px; }
-    .agent-chip::after {
-      content: attr(data-name);
-      position: absolute; top: 100%; left: 50%;
-      transform: translateX(-50%); margin-top: 8px;
-      font-size: 11px; font-weight: 600; letter-spacing: 0.03em;
-      color: var(--ember-soft); white-space: nowrap;
-      opacity: 0; transition: opacity 0.2s ease; pointer-events: none;
-    }
-    .agent-chip:hover::after { opacity: 1; }
-    @keyframes agentsScroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
-    @media (prefers-reduced-motion: reduce) { .agents-track { animation: none; } }
-
-    /* relocated live-product demo (was the hero centrepiece) */
-    .live { background: var(--surface-0); padding: 104px 52px 112px; }
-    .live-shot {
-      width: min(100% - 40px, 1200px);
-      margin: 46px auto 0;
-      position: relative;
-      opacity: 0; transform: translateY(40px) scale(0.99);
-      transition: opacity 0.9s ease, transform 0.9s ease;
-    }
-    .live-shot.visible { opacity: 1; transform: none; }
-    /* blurred ember glow blobs behind the window, for separation from the dark section.
-       z-index:0 (not -1) so they sit above the section background but below the window. */
-    .live-shot::before {
-      content: '';
-      position: absolute; inset: -14% -12% -18% -12%;
-      background:
-        radial-gradient(40% 46% at 8% 20%, rgba(255,122,24,0.24) 0%, transparent 64%),
-        radial-gradient(44% 50% at 92% 14%, rgba(255,154,60,0.20) 0%, transparent 66%),
-        radial-gradient(66% 54% at 50% 112%, rgba(255,122,24,0.22) 0%, transparent 66%);
-      filter: blur(82px); z-index: 0;
-      pointer-events: none;
-    }
-    .live-shot::after {
-      content: '';
-      position: absolute; inset: -8% -6% -12% -6%;
-      background: radial-gradient(60% 62% at 50% 50%, rgba(255,122,24,0.14) 0%, transparent 72%);
-      filter: blur(72px); z-index: 0;
-      pointer-events: none;
-    }
-    .live-shot .app-window { position: relative; z-index: 1; }
-
-    /* ─── WAVE ─── */
-    .wave { width: 100%; overflow: hidden; line-height: 0; margin-top: -2px; }
-    .wave svg { display: block; width: 100%; }
-
-    /* ─── FEATURES ─── */
-    .features {
-      background: var(--surface-1);
-      padding: 100px 52px;
-    }
-    .section-eyebrow {
-      text-align: center;
-      font-size: 11px; font-weight: 700;
-      letter-spacing: 0.12em; text-transform: uppercase;
-      color: var(--ember-soft); margin-bottom: 14px;
-    }
-    .section-title {
-      font-family: var(--font-body);
-      font-size: clamp(34px, 5vw, 52px);
-      font-weight: 600; text-align: center;
-      line-height: 1.12; letter-spacing: -0.025em;
-      color: var(--text-hi); margin-bottom: 14px;
-    }
-    .section-sub {
-      text-align: center; font-size: 16.5px;
-      color: var(--text-lo); max-width: 500px;
-      margin: 0 auto 72px; line-height: 1.65;
+    /* ─── PRODUCT MOCKUP ─── */
+    .mockup { position: relative; z-index: 2; padding: 0 0 96px; }
+    .mockup-head { max-width: 720px; margin: 0 auto 32px; text-align: center; }
+    .mockup-sub { font-family: var(--font-mono); font-size: 13px; color: var(--ink-2); margin-top: 14px; line-height: 1.6; }
+    .app-shell { position: relative; margin: 0 auto; padding: 16px;      /* fills the aligned content column; brackets sit on gridlines */
+      display: flex; flex-direction: column; justify-content: center; }   /* when snapped to a module height, centre the window in the frame */
+    .app-window { position: relative; overflow: hidden; background: #FFFFFF; border: 1px solid var(--line); border-radius: var(--r); }
+    .aw-bar { display: flex; align-items: center; gap: 14px; padding: 11px 15px; background: #EFEEE8; border-bottom: 1px solid var(--line-2); }
+    .aw-dots { display: flex; gap: 7px; }
+    .aw-dot { width: 11px; height: 11px; border-radius: 50%; }
+    .aw-dot.r { background: #FF5F57; } .aw-dot.y { background: #FEBC2E; } .aw-dot.g { background: #28C840; }
+    .aw-title { flex: 1; text-align: center; font-family: var(--font-mono); font-size: 12px; color: var(--ink-2); }
+    .aw-title b { font-weight: 700; color: var(--ink); }
+    .aw-title .aw-run { color: var(--ember); }
+    .aw-user { display: flex; align-items: center; gap: 8px; font-family: var(--font-mono); font-size: 11px; color: var(--muted); }
+    .aw-user .aw-av { width: 22px; height: 22px; border-radius: 6px; background: var(--ink); color: #fff; font-size: 9px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+    .aw-body { display: grid; grid-template-columns: 220px 1fr; height: 468px; }
+    .aw-sb { background: #F4F3EE; border-right: 1px solid var(--line-2); padding: 13px 9px; overflow: hidden; display: flex; flex-direction: column; }
+    .aw-navitem { display: flex; align-items: center; gap: 9px; padding: 7px 9px; font-family: var(--font-mono); font-size: 12px; color: var(--ink-2); }
+    .aw-navitem { border-radius: var(--r-sm); }
+    .aw-navitem.on { background: #E5E4DE; color: var(--ink); }
+    .aw-ic { width: 14px; height: 14px; flex: none; border: 1.5px solid currentColor; opacity: 0.7; }
+    .aw-sec { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted-2); margin: 16px 6px 8px; }
+    .aw-sbx { display: flex; align-items: center; gap: 9px; padding: 7px 8px; margin-bottom: 2px; border-radius: var(--r-sm); }
+    .aw-sbx.active { background: #fff; border: 1px solid var(--line); }
+    .aw-sbav { width: 25px; height: 25px; border-radius: var(--r-sm); flex: none; display: flex; align-items: center; justify-content: center; font-family: var(--font-mono); font-size: 9px; font-weight: 700; color: #fff; }
+    .aw-sbtext { min-width: 0; flex: 1; }
+    .aw-sbname { display: block; font-family: var(--font-mono); font-size: 12px; font-weight: 700; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .aw-sbsub { display: block; font-family: var(--font-mono); font-size: 10px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .aw-sbsub.work { color: var(--ember); }
+    .aw-sbfoot { margin-top: auto; padding-top: 12px; display: flex; align-items: center; gap: 7px; font-family: var(--font-mono); font-size: 10.5px; color: var(--muted); }
+    .aw-sbfoot .d { width: 7px; height: 7px; border-radius: 50%; background: #28C840; }
+    .aw-main { display: flex; flex-direction: column; background: #FFFFFF; min-width: 0; }
+    .aw-mhead { display: flex; align-items: center; gap: 11px; padding: 12px 17px; border-bottom: 1px solid var(--line-2); }
+    .aw-mtitle { font-family: var(--font-mono); font-size: 13px; font-weight: 700; color: var(--ink); }
+    .aw-chip { display: inline-flex; align-items: center; gap: 5px; font-family: var(--font-mono); font-size: 10.5px; color: var(--ink-2); background: var(--paper-2); border: 1px solid var(--line); border-radius: var(--r-sm); padding: 2px 8px; }
+    .aw-chip img { width: 11px; height: 11px; }
+    .aw-mstatus { font-family: var(--font-mono); font-size: 11.5px; color: var(--muted); display: inline-flex; align-items: center; gap: 6px; }
+    .aw-mstatus .d { width: 7px; height: 7px; border-radius: 50%; background: #28C840; }
+    .aw-stop { margin-left: auto; font-family: var(--font-mono); font-size: 11px; color: var(--ink); border: 1px solid var(--line); border-radius: var(--r-sm); padding: 5px 11px; background: var(--card); }
+    .aw-tabs { display: flex; gap: 3px; padding: 10px 15px 0; }
+    .aw-tab { font-family: var(--font-mono); font-size: 12px; padding: 5px 12px; color: var(--muted); border-radius: var(--r-sm) var(--r-sm) 0 0; }
+    .aw-tab.on { color: var(--ink); background: var(--paper-2); font-weight: 700; }
+    .aw-term { flex: 1; overflow: hidden; padding: 15px 19px; font-family: var(--font-mono); font-size: 12px; line-height: 1.75; color: var(--ink-2); }
+    .aw-term .warn { color: var(--ember); }
+    .aw-term .prompt { color: var(--ink); font-weight: 700; }
+    .aw-term .tool { color: var(--ink); }
+    .aw-term .dim { color: var(--muted); }
+    .aw-term .add { color: #16A34A; }
+    .aw-term .bullet { color: var(--ember); }
+    .aw-term .row { display: flex; gap: 9px; }
+    .aw-input { margin: 6px 15px 15px; border: 1px solid var(--line); border-radius: var(--r-md); padding: 11px 13px; font-family: var(--font-mono); font-size: 12px; color: var(--muted); background: var(--card); display: flex; align-items: center; gap: 8px; }
+    .aw-input .car { color: var(--ember); font-weight: 700; }
+    @media (max-width: 720px) {
+      .aw-body { grid-template-columns: 1fr; height: 520px; }
+      .aw-sb { display: none; }
     }
 
-    /* Bento grid: varied tile sizes on a 4-column track. */
-    .bento {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      grid-auto-rows: minmax(186px, auto);
-      gap: 18px; max-width: 1240px; margin: 0 auto;
-    }
-    .bento-tile {
-      background: var(--card);
-      border-radius: 22px;
-      padding: 30px;
-      border: 1px solid var(--line);
-      position: relative; overflow: hidden;
-      display: flex; flex-direction: column;
-      opacity: 0; transform: translateY(32px);
-      transition: opacity 0.6s ease, transform 0.6s ease, box-shadow 0.28s, border-color 0.28s;
-    }
-    .bento-tile.visible { opacity: 1; transform: translateY(0); }
-    .bento-tile:hover {
-      transform: translateY(-5px) !important;
-      box-shadow: 0 24px 64px rgba(0,0,0,0.5);
-      border-color: var(--line-2);
-    }
-    /* spans */
-    .bento-a { grid-column: span 2; grid-row: span 2; }
-    .bento-b { grid-column: span 2; }
-    .bento-e { grid-column: span 2; }
-    .bento-f { grid-column: span 2; }
-    .bento-g { grid-column: span 4; }
-    /* ember accent tile */
-    .bento-a {
-      background:
-        radial-gradient(ellipse 120% 90% at 15% 0%, rgba(255,122,24,0.22) 0%, transparent 55%),
-        linear-gradient(165deg, #201712 0%, #120C08 100%);
-      border-color: rgba(255,154,60,0.2);
-      justify-content: space-between;
-    }
-    .bento-a .feat-title { color: var(--white); font-size: 26px; }
-    .bento-a .feat-desc { color: rgba(255,255,255,0.62); font-size: 15px; }
-    .bento-a .feat-icon { background: rgba(255,122,24,0.18); color: var(--ember-soft); }
-    /* wrapper holds a soft ember glow behind each screenshot for separation */
-    .bento-shot-wrap { position: relative; margin-top: 22px; }
-    .bento-shot-wrap::before {
-      content: '';
-      position: absolute; inset: -10% -7% -16% -7%;
-      background: radial-gradient(58% 64% at 50% 24%, rgba(255,122,24,0.26) 0%, transparent 70%);
-      filter: blur(54px); z-index: 0; pointer-events: none;
-    }
-    .bento-shot {
-      position: relative; z-index: 1;
-      border-radius: 12px; width: 100%; display: block;
-      border: 1px solid rgba(255,255,255,0.10);
-      box-shadow: 0 18px 50px rgba(0,0,0,0.5), 0 6px 24px rgba(255,122,24,0.10);
-      cursor: zoom-in; transition: transform 0.25s ease;
-    }
-    .bento-shot:hover { transform: translateY(-3px); }
-
-    /* full-screen image lightbox (stays on the page) */
-    .lightbox {
-      position: fixed; inset: 0; z-index: 1000;
-      display: flex; align-items: center; justify-content: center; padding: 4vmin;
-      background: rgba(4,4,6,0.82);
-      backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-      opacity: 0; visibility: hidden; transition: opacity 0.25s ease;
-      cursor: zoom-out;
-    }
-    .lightbox.open { opacity: 1; visibility: visible; }
-    .lightbox img {
-      max-width: 96vw; max-height: 92vh; border-radius: 12px;
-      border: 1px solid rgba(255,255,255,0.12);
-      box-shadow: 0 40px 120px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,122,24,0.10),
-        0 0 90px rgba(255,122,24,0.14);
-      transform: scale(0.96); transition: transform 0.25s ease;
-    }
-    .lightbox.open img { transform: scale(1); }
-    .lightbox-close {
-      position: absolute; top: 20px; right: 24px;
-      width: 40px; height: 40px; border-radius: 50%;
-      background: rgba(255,255,255,0.08); border: 1px solid var(--line);
-      color: #fff; font-size: 22px; line-height: 1; cursor: pointer;
-      display: flex; align-items: center; justify-content: center; transition: background 0.2s;
-    }
-    .lightbox-close:hover { background: rgba(255,255,255,0.18); }
-
-    .feat-icon {
-      width: 50px; height: 50px; border-radius: 14px;
-      display: flex; align-items: center; justify-content: center;
-      color: rgba(255,255,255,0.82); margin-bottom: 20px; flex-shrink: 0;
-    }
-    .feat-icon.a { background: rgba(255,255,255,0.07); }
-    .feat-icon.b { background: rgba(255,255,255,0.07); }
-    .feat-icon.c { background: rgba(255,255,255,0.07); }
-    .feat-title {
-      font-family: var(--font-body);
-      font-size: 19px; font-weight: 600;
-      color: var(--text-hi); margin-bottom: 10px;
-      letter-spacing: -0.02em;
-    }
-    .feat-desc { font-size: 13.5px; line-height: 1.68; color: var(--text-lo); }
-
-    /* agent logos: bigger, full-colour marks with the label beneath */
-    .agent-logos {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 26px 12px;
-      margin-top: auto;
-      padding-top: 14px;
-    }
-    .agent-logo {
-      display: flex; flex-direction: column;
-      align-items: center; gap: 12px; text-align: center;
-    }
-    .agent-ico {
-      display: block;
-      width: 46px; height: 46px;
-      transition: transform 0.25s ease;
-    }
-    .agent-logo:hover .agent-ico { transform: translateY(-3px) scale(1.06); }
-    .agent-name {
-      font-size: 13.5px; font-weight: 600;
-      color: var(--text-lo); letter-spacing: -0.01em; line-height: 1;
-    }
-    /* brand colours (tuned for a dark surface) */
-    .a-claude      { color: #E08A63; }
-    .a-codex       { color: #ECECEC; }
-    .a-antigravity { color: #6AA1FF; }
-    .a-opencode    { color: #ECECEC; }
-    .a-cursor      { color: #ECECEC; }
-
-    /* git tile: full-width feature with a diff-flavoured chip stack */
-    .bento-g {
-      flex-direction: row; align-items: center; gap: 32px;
-    }
-    .bento-g .feat-icon { margin-bottom: 0; }
-    .bento-g .g-copy { max-width: 620px; }
-    .bento-g .feat-title { margin-bottom: 9px; }
-    .bento-g .feat-desc { font-size: 14px; }
-    .g-chips {
-      margin-left: auto; display: flex; flex-wrap: wrap;
-      gap: 8px; justify-content: flex-end; max-width: 340px;
-    }
-    .g-chip {
-      display: inline-flex; align-items: center; gap: 6px;
-      font-size: 12px; font-weight: 600; color: var(--text-hi);
-      background: rgba(255,255,255,0.05); border: 1px solid var(--line);
-      border-radius: 100px; padding: 6px 12px; white-space: nowrap;
-    }
-    .g-chip.mono { font-family: 'SF Mono','Menlo',monospace; font-weight: 500; color: var(--text-lo); }
-    .g-add { color: #4ADE80; } .g-del { color: #F87171; }
-
-    /* ─── HOW IT WORKS ─── */
-    .how {
-      background: var(--surface-0);
-      padding: 100px 52px;
-    }
-    .steps {
-      display: grid; grid-template-columns: repeat(4, 1fr);
-      gap: 48px; max-width: 1080px; margin: 0 auto;
-      position: relative;
-    }
-    .steps::before {
-      content: '';
-      position: absolute;
-      top: 27px;
-      left: calc(12.5% + 20px);
-      right: calc(12.5% + 20px);
-      height: 1px;
-      background: linear-gradient(90deg,
-        transparent, rgba(255,154,60,0.4) 50%, transparent);
-    }
-    .step {
-      display: flex; flex-direction: column;
-      align-items: center; text-align: center;
-      opacity: 0; transform: translateY(22px);
-      transition: opacity 0.6s ease, transform 0.6s ease;
-    }
-    .step.visible { opacity: 1; transform: translateY(0); }
-    .step-num {
-      width: 54px; height: 54px; border-radius: 50%;
-      background: linear-gradient(135deg, var(--ember-soft), var(--ember));
-      color: #1a0d02;
-      font-family: var(--font-body);
-      font-size: 20px; font-weight: 700;
-      display: flex; align-items: center; justify-content: center;
-      margin-bottom: 24px; position: relative; z-index: 1;
-      flex-shrink: 0;
-      box-shadow: 0 4px 20px rgba(255,122,24,0.4);
-    }
-    .step-title {
-      font-family: var(--font-body);
-      font-size: 17px; font-weight: 600;
-      color: var(--text-hi); margin-bottom: 9px;
-    }
-    .step-desc { font-size: 13px; color: var(--text-lo); line-height: 1.62; }
-
-    /* ─── MOCKUP ─── */
-    .mockup-section {
-      background: var(--ocean-deep);
-      padding: 100px 52px;
-      position: relative; overflow: hidden;
-    }
-    .mockup-section::before {
-      content: '';
-      position: absolute; top: -220px; left: 50%;
-      transform: translateX(-50%);
-      width: 900px; height: 900px;
-      background: radial-gradient(ellipse, rgba(63,63,70,0.12) 0%, transparent 70%);
-      pointer-events: none;
-    }
-    .mockup-section .section-eyebrow { color: var(--ocean-sky); }
-    .mockup-section .section-title { color: var(--white); }
-    .mockup-section .section-sub { color: rgba(255,255,255,0.48); }
-
-    .browser-window {
-      max-width: 1020px; margin: 0 auto;
-      border-radius: 16px; overflow: hidden;
-      box-shadow: 0 48px 140px rgba(0,0,0,0.55);
-      border: 1px solid rgba(255,255,255,0.07);
-      opacity: 0; transform: translateY(44px);
-      transition: opacity 0.9s ease, transform 0.9s ease;
-    }
-    .browser-window.visible { opacity: 1; transform: translateY(0); }
-    .browser-shot { display: block; width: 100%; height: auto; }
-    .app-frame { display: block; width: 100%; aspect-ratio: 1180 / 720; border: 0; background: #0A0B0F; }
-
-    .browser-bar {
-      background: #1C2E40;
-      padding: 13px 20px;
-      display: flex; align-items: center; gap: 16px;
-    }
-    .browser-dots { display: flex; gap: 7px; }
-    .browser-dot { width: 12px; height: 12px; border-radius: 50%; }
-    .browser-dot:nth-child(1) { background: #FF5F57; }
-    .browser-dot:nth-child(2) { background: #FEBC2E; }
-    .browser-dot:nth-child(3) { background: #28C840; }
-    .browser-url {
-      flex: 1;
-      background: rgba(255,255,255,0.05);
-      border-radius: 6px; padding: 5px 14px;
-      font-size: 12px; color: rgba(255,255,255,0.32);
-    }
-
-    .browser-content {
-      display: grid; grid-template-columns: 230px 1fr;
-      height: 480px; background: #0F1D2B;
-    }
-
-    /* sidebar */
-    .ui-sidebar {
-      background: #0C1926;
-      border-right: 1px solid rgba(255,255,255,0.06);
-      padding: 18px 0;
-      display: flex; flex-direction: column; gap: 0;
-    }
-    .ui-sb-header {
-      padding: 2px 18px 18px;
-      border-bottom: 1px solid rgba(255,255,255,0.06);
-      margin-bottom: 18px;
-      display: flex; align-items: center; gap: 10px;
-    }
-    .ui-sb-header img { width: 22px; height: 22px; object-fit: contain; }
-    .ui-sb-name {
-      font-family: var(--font-body);
-      font-size: 15px; font-weight: 600;
-      color: rgba(255,255,255,0.88);
-    }
-    .ui-nav-section { padding: 0 10px; margin-bottom: 22px; }
-    .ui-nav-section-label {
-      font-size: 10px; font-weight: 700;
-      letter-spacing: 0.1em; text-transform: uppercase;
-      color: rgba(255,255,255,0.2);
-      padding: 0 8px; margin-bottom: 5px;
-    }
-    .ui-nav-item {
-      display: flex; align-items: center; gap: 9px;
-      padding: 8px 10px; border-radius: 8px;
-      font-size: 12.5px; color: rgba(255,255,255,0.42);
-      margin-bottom: 2px; cursor: pointer;
-      transition: all 0.15s;
-    }
-    .ui-nav-item.active {
-      background: rgba(63,63,70,0.14);
-      color: var(--ocean-sky);
-    }
-    .ui-nav-dot {
-      width: 5px; height: 5px; border-radius: 50%;
-      background: currentColor; flex-shrink: 0;
-    }
-
-    /* main content */
-    .ui-main { padding: 22px; overflow: hidden; }
-    .ui-main-hdr {
-      display: flex; align-items: center;
-      justify-content: space-between; margin-bottom: 18px;
-    }
-    .ui-main-title {
-      font-family: var(--font-body);
-      font-size: 17px; font-weight: 600;
-      color: rgba(255,255,255,0.88);
-    }
-    .ui-new-btn {
-      background: var(--coral); color: white;
-      border: none; padding: 7px 14px;
-      border-radius: 8px; font-size: 12px;
-      font-weight: 600; cursor: pointer;
-      display: flex; align-items: center; gap: 5px;
-      font-family: var(--font-body);
-    }
-
-    .ui-sandbox-grid {
-      display: grid; grid-template-columns: repeat(2, 1fr);
-      gap: 10px; margin-bottom: 18px;
-    }
-    .ui-sandbox-card {
-      background: rgba(255,255,255,0.04);
-      border: 1px solid rgba(255,255,255,0.07);
-      border-radius: 10px; padding: 14px;
-    }
-    .ui-sc-top {
-      display: flex; align-items: center;
-      justify-content: space-between; margin-bottom: 10px;
-    }
-    .ui-sc-name {
-      font-size: 12.5px; font-weight: 600;
-      color: rgba(255,255,255,0.82);
-    }
-    .ui-status {
-      display: flex; align-items: center; gap: 5px;
-      font-size: 10.5px; font-weight: 600;
-    }
-    .ui-status-dot { width: 6px; height: 6px; border-radius: 50%; }
-    .status-running { color: #4ADE80; }
-    .status-running .ui-status-dot { background: #4ADE80; animation: pulse 2s infinite; }
-    .status-idle { color: rgba(255,255,255,0.28); }
-    .status-idle .ui-status-dot { background: rgba(255,255,255,0.18); }
-    .ui-sc-meta {
-      display: flex; gap: 10px;
-      font-size: 11px; color: rgba(255,255,255,0.28);
-    }
-
-    .ui-logs {
-      background: rgba(0,0,0,0.28);
-      border-radius: 8px; padding: 12px 14px;
-      font-family: 'Courier New', monospace;
-      font-size: 11px; line-height: 1.85;
-      height: 132px; overflow: hidden;
-    }
-    .log-row { display: flex; gap: 12px; }
-    .log-t { color: rgba(168,216,234,0.38); flex-shrink: 0; }
-    .log-m { }
-    .log-m.green { color: #4ADE80; }
-    .log-m.blue  { color: var(--ocean-sky); }
-    .log-m.dim   { color: rgba(255,255,255,0.4); }
-
-    /* den-accurate mockup: sandbox avatar rows + agent terminal */
-    .ui-sb-item { display: flex; align-items: center; gap: 9px; padding: 7px 10px; border-radius: 8px; margin: 0 4px 1px; }
-    .ui-sb-item.active { background: rgba(255,255,255,0.07); }
-    .ui-av {
-      width: 24px; height: 24px; border-radius: 7px; flex-shrink: 0;
-      display: flex; align-items: center; justify-content: center;
-      background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.7);
-      font-size: 10px; font-weight: 600;
-    }
-    .ui-av-folder { font-size: 12px; }
-    .ui-sb-text { flex: 1; min-width: 0; }
-    .ui-sb-itemname { font-size: 12px; color: rgba(255,255,255,0.85); }
-    .ui-sb-itemsub { font-size: 10px; color: rgba(255,255,255,0.32); }
-    .ui-rundot { width: 6px; height: 6px; border-radius: 50%; background: #4ADE80; flex-shrink: 0; }
-    .ui-count { font-size: 10px; color: rgba(255,255,255,0.45); background: rgba(255,255,255,0.08); border-radius: 8px; padding: 1px 6px; }
-
-    .ui-main2 { display: flex; flex-direction: column; background: #0F1D2B; overflow: hidden; }
-    .ui-detail-hdr { display: flex; align-items: center; gap: 9px; padding: 13px 18px; border-bottom: 1px solid rgba(255,255,255,0.06); }
-    .ui-detail-name { font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.9); }
-    .ui-chip { font-size: 10.5px; color: rgba(255,255,255,0.6); border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.05); border-radius: 100px; padding: 2px 9px; }
-    .ui-detail-status { font-size: 12px; color: rgba(255,255,255,0.4); }
-    .ui-stop { margin-left: auto; font-size: 11.5px; color: rgba(255,255,255,0.78); border: 1px solid rgba(255,255,255,0.14); border-radius: 7px; padding: 4px 11px; }
-    .ui-termbar { display: flex; align-items: center; padding: 8px 14px; background: #0b1622; border-bottom: 1px solid rgba(255,255,255,0.05); }
-    .ui-seg { display: flex; gap: 2px; background: rgba(255,255,255,0.06); border-radius: 6px; padding: 2px; }
-    .ui-seg span { font-size: 11.5px; padding: 3px 11px; border-radius: 4px; color: rgba(255,255,255,0.4); }
-    .ui-seg span.on { background: rgba(255,255,255,0.12); color: #fff; }
-    .ui-files { margin-left: auto; font-size: 11.5px; color: rgba(255,255,255,0.5); }
-    .ui-term {
-      flex: 1; background: #0a0a0a; padding: 16px 18px;
-      font-family: 'Courier New', monospace; font-size: 11.5px; line-height: 1.9;
-      color: #d4d4d4; overflow: hidden;
-    }
-    .ui-term .tm-accent { color: #ffffff; }
-    .ui-term .tm-norm { color: #d4d4d4; }
-    .ui-term .tm-dim { color: rgba(255,255,255,0.42); }
-    .ui-term .tm-prompt { color: rgba(255,255,255,0.85); }
-    .ui-term .tm-caret { color: #fff; animation: pulse 1.1s steps(1) infinite; }
-
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.35; }
-    }
-
-    /* ─── STATS ─── */
-    .stats-bar {
-      background: var(--sand-2);
-      padding: 52px;
-      display: flex; justify-content: center;
-      gap: 80px; flex-wrap: wrap;
-    }
-    .stat-item { text-align: center; }
-    .stat-num {
-      font-family: var(--font-body);
-      font-size: 44px; font-weight: 700;
-      color: var(--ocean-deep);
-      letter-spacing: -0.03em; line-height: 1;
-      margin-bottom: 7px;
-    }
-    .stat-label { font-size: 13px; color: var(--text-mid); font-weight: 500; }
-
-    /* ─── READINESS HOOK ─── */
-    .ready {
-      background: var(--ocean-deep);
-      padding: 140px 52px;
-      text-align: center;
-      position: relative; overflow: hidden;
-    }
-    .ready::before {
-      content: '';
-      position: absolute; top: 50%; left: 50%;
-      transform: translate(-50%, -50%);
-      width: 820px; height: 820px;
-      background: radial-gradient(ellipse, rgba(63,63,70,0.16) 0%, transparent 70%);
-      pointer-events: none;
-    }
-    .ready-inner {
-      position: relative; z-index: 1;
-      opacity: 0; transform: translateY(26px);
-      transition: opacity 0.7s ease, transform 0.7s ease;
-    }
-    .ready-inner.visible { opacity: 1; transform: translateY(0); }
-    .ready .section-eyebrow { color: var(--ocean-sky); }
-    .ready-title {
-      font-family: var(--font-body);
-      font-size: clamp(40px, 6.5vw, 76px);
-      font-weight: 700; color: var(--white);
-      line-height: 1.04; letter-spacing: -0.035em;
-      margin-bottom: 24px;
-    }
-    .ready-title em { font-style: normal; color: var(--ocean-sky); }
-    .ready-sub {
-      font-size: 18px; color: rgba(255,255,255,0.55);
-      max-width: 560px; margin: 0 auto 44px; line-height: 1.65;
-    }
-    .ready-sub em { font-style: normal; color: rgba(255,255,255,0.85); }
-    .ready-btn { font-size: 16px; padding: 16px 38px; }
-
-    /* ─── CTA ─── */
-    .cta-section {
-      background: linear-gradient(155deg, #100B08 0%, #08080A 100%);
-      padding: 130px 52px;
-      text-align: center;
-      position: relative; overflow: hidden;
-      border-top: 1px solid var(--line);
-    }
-    .cta-section::before {
-      content: '';
-      position: absolute; bottom: -120px; left: 50%;
-      transform: translateX(-50%);
-      width: 760px; height: 420px;
-      background: radial-gradient(ellipse, rgba(255,122,24,0.16) 0%, transparent 70%);
-    }
-    .cta-section::after {
-      content: '';
-      position: absolute; top: -100px; right: -100px;
-      width: 420px; height: 420px;
-      background: radial-gradient(ellipse, rgba(255,122,24,0.08) 0%, transparent 70%);
-    }
-    .cta-title {
-      font-family: var(--font-body);
-      font-size: clamp(40px, 6vw, 66px);
-      font-weight: 600; color: var(--white);
-      line-height: 1.08; letter-spacing: -0.032em;
-      margin-bottom: 20px; position: relative; z-index: 1;
-    }
-    .cta-title em { font-style: normal; color: var(--ember-soft); text-shadow: 0 0 40px rgba(255,122,24,0.5); }
-    .cta-sub {
-      font-size: 17px; color: rgba(255,255,255,0.5);
-      margin-bottom: 52px; max-width: 440px;
-      margin-left: auto; margin-right: auto;
-      line-height: 1.65; position: relative; z-index: 1;
-    }
-    .cta-actions {
-      display: flex; gap: 14px; justify-content: center;
-      position: relative; z-index: 1;
-    }
-    .btn-white {
-      background: linear-gradient(135deg, var(--ember-soft) 0%, var(--ember) 100%);
-      color: #fff;
-      font-family: var(--font-body);
-      font-size: 15px; font-weight: 700;
-      padding: 15px 34px; border-radius: 100px;
-      text-decoration: none;
-      box-shadow: 0 4px 26px rgba(255,122,24,0.45), inset 0 1px 0 rgba(255,255,255,0.35);
-      transition: all 0.25s;
-    }
-    .btn-white:hover { transform: translateY(-2px); box-shadow: 0 12px 40px rgba(255,122,24,0.6), inset 0 1px 0 rgba(255,255,255,0.4); }
-    .btn-ghost-w {
-      background: rgba(255,255,255,0.09);
-      color: rgba(255,255,255,0.75);
-      font-family: var(--font-body);
-      font-size: 15px; font-weight: 500;
-      padding: 15px 28px; border-radius: 100px;
-      text-decoration: none;
-      border: 1px solid rgba(255,255,255,0.15);
-      transition: all 0.25s;
-    }
-    .btn-ghost-w:hover { background: rgba(255,255,255,0.16); transform: translateY(-2px); }
+    /* ─── CLOSING ─── */
+    .closing { position: relative; z-index: 2; padding: 96px 0; border-top: 1px solid var(--line-2); }
+    .closing-grid { display: grid; grid-template-columns: 1.35fr 1fr; gap: 40px; align-items: end; }
+    .closing h2 { font-family: var(--font-disp); font-size: clamp(32px, 4.6vw, 66px); font-weight: 700; text-transform: uppercase; letter-spacing: -0.02em; line-height: 0.95; }
+    .closing h2 .dim { color: var(--muted-2); }
+    .closing-side { font-family: var(--font-mono); font-size: 13px; color: var(--ink-2); line-height: 1.65; }
+    .closing-side b { display: block; color: var(--ink); font-weight: 700; margin-bottom: 8px; letter-spacing: 0.04em; text-transform: uppercase; font-size: 12px; }
+    .closing-actions { margin-top: 22px; display: flex; gap: 12px; flex-wrap: wrap; }
 
     /* ─── FOOTER ─── */
-    footer {
-      background: var(--surface-0);
-      border-top: 1px solid var(--line);
-      padding: 44px 52px;
-      display: flex; align-items: center;
-      justify-content: space-between; flex-wrap: wrap; gap: 22px;
-    }
-    .footer-logo {
-      display: flex; align-items: center; gap: 10px; text-decoration: none;
-    }
-    .footer-logo img { width: 26px; height: 26px; object-fit: contain; opacity: 0.75; }
-    .footer-logo-text {
-      font-family: var(--font-body);
-      font-size: 18px; font-weight: 600;
-      color: rgba(255,255,255,0.65);
-    }
-    .footer-links { display: flex; gap: 26px; list-style: none; }
-    .footer-links a {
-      color: rgba(255,255,255,0.3);
-      text-decoration: none; font-size: 13px;
-      transition: color 0.2s;
-    }
-    .footer-links a:hover { color: rgba(255,255,255,0.65); }
-    .footer-copy { font-size: 12px; color: rgba(255,255,255,0.18); }
-
-    /* ─── ANIMATIONS ─── */
-    @keyframes fadeUp {
-      from { opacity: 0; transform: translateY(22px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-    @keyframes logoReveal {
-      from { opacity: 0; transform: translateY(14px) scale(0.9); }
-      to   { opacity: 1; transform: translateY(0) scale(1); }
-    }
-    @keyframes floatLoop {
-      0%, 100% { transform: translateY(0); }
-      50%       { transform: translateY(-14px); }
-    }
+    footer { position: relative; z-index: 2; padding: 32px 0 64px; border-top: 1px solid var(--line-2); }
+    .footer-row { display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
+    .footer-links { display: flex; gap: 8px; list-style: none; }
+    .footer-links a { color: var(--muted); text-decoration: none; font-family: var(--font-mono); font-size: 12px; padding: 5px 9px; }
+    .footer-links a:hover { color: var(--ink); background: rgba(0,0,0,0.05); }
+    .footer-meta { font-family: var(--font-mono); font-size: 11.5px; color: var(--muted); letter-spacing: 0.04em; }
 
     /* ─── RESPONSIVE ─── */
     @media (max-width: 960px) {
-      .bento { grid-template-columns: repeat(2, 1fr); }
-      .bento-a, .bento-b, .bento-e, .bento-f, .bento-g { grid-column: span 2; }
-      .bento-a { grid-row: auto; }
-      .bento-g { flex-direction: column; align-items: flex-start; gap: 0; }
-      .bento-g .g-chips { margin-left: 0; margin-top: 16px; justify-content: flex-start; max-width: none; }
-      .agent-logos { gap: 16px 6px; }
-      .steps { grid-template-columns: repeat(2, 1fr); }
-      .steps::before { display: none; }
-      nav { padding: 16px 24px; }
       .nav-links { display: none; }
-      .stats-bar { gap: 44px; }
+      .hero-grid { grid-template-columns: 1fr; gap: 28px; }
+      .hero-stage { max-width: 440px; margin: 0 auto; order: 2; }
+      .band-card { grid-template-columns: 1fr; }
+      .band-col { border-right: 0; border-bottom: 1px solid var(--line-2); }
+      .band-col:last-child { border-bottom: 0; }
+      .feat-grid { grid-template-columns: 1fr; }
+      .closing-grid { grid-template-columns: 1fr; }
     }
-    @media (max-width: 580px) {
-      .bento { grid-template-columns: 1fr; }
-      .bento-a, .bento-b, .bento-e, .bento-f, .bento-g { grid-column: span 1; }
-      .agent-logos { grid-template-columns: repeat(3, 1fr); }
-      .steps { grid-template-columns: 1fr; }
-      .hero-actions { flex-direction: column; width: 100%; }
-      .btn-primary, .btn-secondary { justify-content: center; }
-      footer { flex-direction: column; text-align: center; }
-      .footer-links { flex-wrap: wrap; justify-content: center; }
+    @media (max-width: 560px) {
+      .nav-login { display: none; }
+      .hero { padding-top: 130px; }
     }
-    /* display headings + brand wordmarks use Sora; body stays Rubik */
-    .nav-logo-text, .hero-title, .section-title, .feat-title, .step-title,
-    .stat-num, .ready-title, .cta-title, .footer-logo-text {
-      font-family: var(--font-head);
-    }
+    @media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
   </style>
 </head>
 <body>
 
-<!-- ── NAV ── -->
+<div class="backplate"></div>
+<div class="bezel"></div>
+<span class="screen-mark tl" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="1.4"/></svg></span>
+<span class="screen-mark tr" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="1.4"/><circle cx="12" cy="12" r="2" fill="currentColor"/><path d="M12 1v4M12 19v4M1 12h4M19 12h4" stroke="currentColor" stroke-width="1.4"/></svg></span>
+
 <nav id="nav">
-  <a href="https://den.studio" class="nav-logo">
-    <img src="icon-light.svg" alt="den">
+  <a href="./" class="nav-logo" aria-label="den home">
+    <span class="nav-mark"><img src="resources/icon-light.svg" alt="den"></span>
     <span class="nav-logo-text">den</span>
+    <span class="nav-logo-tag">/ SBX.∞</span>
   </a>
   <ul class="nav-links">
-    <li><a href="#features">Features</a></li>
-    <li><a href="#how">How it works</a></li>
-    <li><a href="https://docs.docker.com/ai/sandboxes/" target="_blank" rel="noopener">sbx docs</a></li>
-    <li><a href="#cta" class="nav-cta">Download</a></li>
+    <li><a href="#feature">Platform
+      <svg class="caret" viewBox="0 0 10 6" fill="none" aria-hidden="true"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </a></li>
+    <li><a href="#how">How_it_works</a></li>
+    <li><a href="https://docs.docker.com/ai/sandboxes/" target="_blank" rel="noopener">Docs</a></li>
+    <li><a href="#">Company</a></li>
   </ul>
+  <div class="nav-right">
+    <a href="#" class="nav-login">Log_In</a>
+    <div class="accent-wrap">
+      <button type="button" id="accentSwitch" class="accent-switch" aria-label="Change accent color" aria-haspopup="true" aria-expanded="false"><span class="accent-ball"></span></button>
+      <div class="accent-menu" id="accentMenu" role="menu"></div>
+    </div>
+    <a href="#" class="btn-ember notch nav-cta"><img class="cta-ico" src="resources/icon-dark.svg" alt="">Download</a>
+  </div>
 </nav>
 
-<!-- ── HERO ── -->
-<section class="hero">
-  <canvas class="hero-canvas" id="heroCanvas" aria-hidden="true"></canvas>
-  <div class="hero-scrim"></div>
-
-  <div class="hero-copy">
-    <div class="hero-eyebrow">
-      Safe YOLO for any AI agent
-    </div>
-
-    <h1 class="hero-title">
-      Your AI agents,<br>running <em>inside a box.</em>
-    </h1>
-
-    <p class="hero-sub">
-      Claude, Codex, Gemini, or any coding agent, sealed inside a disposable, network-policed box. Turn off the guardrails, walk away, and let it run full YOLO. No more sitting on the yes / no / cancel button.
-    </p>
-
-    <div class="hero-actions">
-      <a href="#cta" class="btn-primary">
-        <svg width="15" height="15" viewBox="0 0 15 15" fill="none" aria-hidden="true"><path d="M7.5 1v9m0 0L4.5 7m3 3 3-3M1.5 13h12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        Download for Mac
-      </a>
-      <a href="#live" class="btn-secondary">
-        <svg width="15" height="15" viewBox="0 0 15 15" fill="none" aria-hidden="true"><circle cx="7.5" cy="7.5" r="5.75" stroke="currentColor" stroke-width="1.5"/><path d="M6 5l4 2.5L6 10V5z" fill="currentColor"/></svg>
-        See it in action
-      </a>
-    </div>
-
-    <div class="hero-trust">
-      <div class="hero-trust-item"><b>✦</b>&nbsp;Isolated by default</div>
-      <div class="hero-trust-sep"></div>
-      <div class="hero-trust-item"><b>✦</b>&nbsp;Network policies</div>
-      <div class="hero-trust-sep"></div>
-      <div class="hero-trust-item"><b>✦</b>&nbsp;macOS &amp; Windows</div>
-    </div>
-  </div>
-
-  <div class="hero-agents-label">Works with</div>
-  <div class="hero-agents" aria-hidden="true">
-    <div class="agents-track" id="agentsTrack">
-      <span class="agent-chip" data-name="Claude"><span class="agent-slot"><img src="resources/brand-mono/claude.svg" alt=""></span></span>
-      <span class="agent-chip" data-name="Codex"><span class="agent-slot"><img src="withone/agents/codex.svg" alt=""></span></span>
-      <span class="agent-chip" data-name="Copilot"><span class="agent-slot"><img src="withone/agents/copilot.svg" alt=""></span></span>
-      <span class="agent-chip" data-name="Cursor"><span class="agent-slot"><img src="withone/agents/cursor.svg" alt=""></span></span>
-      <span class="agent-chip" data-name="docker-agent"><span class="agent-slot"><img src="withone/used-by-logos/docker.svg" alt=""></span></span>
-      <span class="agent-chip" data-name="Droid"><span class="agent-slot"><img src="withone/agents/droid.svg" alt=""></span></span>
-      <span class="agent-chip" data-name="Gemini"><span class="agent-slot"><img src="withone/agents/gemini.svg" alt=""></span></span>
-      <span class="agent-chip" data-name="Kiro"><span class="agent-slot"><img src="withone/agents/kiro-cli.svg" alt=""></span></span>
-      <span class="agent-chip" data-name="OpenCode"><span class="agent-slot"><img src="withone/agents/opencode.svg" alt=""></span></span>
-      <span class="agent-chip" data-name="Shell"><span class="agent-slot"><img src="resources/brand-mono/shell.svg" alt=""></span></span>
-    </div>
-  </div>
-
-  <a href="#live" class="hero-scroll-hint" aria-hidden="true">
-    <span>Scroll</span>
-    <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 2v9m0 0L3.5 7.5M7 11l3.5-3.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
-  </a>
-</section>
-
-<!-- ── LIVE PRODUCT ── -->
-<section class="live" id="live">
-  <div class="section-eyebrow">See it live</div>
-  <h2 class="section-title">A real agent, working<br>inside the box</h2>
-  <p class="section-sub">This is den, running. Sandboxes on the left, an AI agent building inside an isolated box on the right. Fully interactive.</p>
-
-  <!-- The real product: a live render of den, sandboxes in the sidebar,
-       an AI agent working in the terminal on the right. -->
-  <div class="live-shot" id="liveShot">
-    <div class="app-window">
-      <iframe class="app-frame" src="mockup.html" title="den live interface: an AI agent running inside an isolated box" loading="lazy"></iframe>
-    </div>
-  </div>
-</section>
-
-<!-- ── FEATURES ── -->
-<section class="features" id="features">
-  <div class="section-eyebrow">Why den</div>
-  <h2 class="section-title">Guardrails on the box,<br>not on the agent</h2>
-  <p class="section-sub">Lock down a disposable box once, its filesystem and its network, then let any agent run unattended inside it. The blast radius stops at the box.</p>
-
-  <div class="bento" id="featGrid">
-
-    <!-- Centerpiece: full YOLO, safely -->
-    <div class="bento-tile bento-a">
-      <div>
-        <div class="feat-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L4 14h6l-1 8 9-12h-6z"/></svg></div>
-        <h3 class="feat-title">Full YOLO, safely</h3>
-        <p class="feat-desc">Flip on bypass-permissions and stop approving every command. The agent can install anything, run anything, touch any file. It's sealed inside a box it can't escape, so a bad call never reaches your machine.</p>
+<!-- ─── HERO ─── -->
+<header class="hero">
+  <div class="wrap">
+    <div class="hero-grid">
+      <div class="hero-left">
+        <span class="hero-eyebrow"><span class="sq"></span>[ SAFE_YOLO ] <span class="em">// ANY_AGENT</span></span>
+        <h1 class="hero-h">FULL<br>YOLO.<br><span class="u">ZERO</span><br><span class="cur">BLAST_</span></h1>
+        <p class="hero-sub">Drop Claude, Codex, Gemini, or any coding agent into its own microVM. A private Docker daemon, filesystem, and network walled off from your machine. Kill the guardrails, skip the yes / no / cancel dance, and let it run unattended.</p>
+        <div class="hero-actions">
+          <a href="#" class="btn-ember notch"><img class="cta-ico" src="resources/icon-dark.svg" alt="">Download</a>
+          <a href="#feature" class="btn-ghost notch">See_it_live →</a>
+        </div>
+        <div class="hero-params">
+          <div class="row"><span class="k">isolation</span><span class="c2">=</span><span class="v">microVM // isolated by default</span></div>
+          <div class="row"><span class="k">network</span><span class="c2">=</span><span class="v">policed // deny-by-default</span></div>
+          <div class="row"><span class="k">platform</span><span class="c2">=</span><span class="v">macOS &amp; Windows</span></div>
+          <div class="row"><span class="k">blast_radius</span><span class="c2">=</span><span class="v">0 // on your host</span></div>
+        </div>
       </div>
-      <div class="bento-shot-wrap"><img class="bento-shot" src="screenshots/app-home.png" alt="den running a Claude agent with bypass-permissions enabled inside an isolated sandbox"></div>
-    </div>
 
-    <!-- Every agent -->
-    <div class="bento-tile bento-b">
-      <div class="feat-icon b"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg></div>
-      <h3 class="feat-title">Every agent, first-class</h3>
-      <p class="feat-desc">Full agent TUIs over a real PTY. Bring the one you already use.</p>
-      <div class="agent-logos">
-        <div class="agent-logo a-claude">
-          <svg class="agent-ico" viewBox="0 0 24 24" width="30" height="30" fill="currentColor" aria-hidden="true"><path d="M4.709 15.955l4.72-2.647.08-.23-.08-.128H9.2l-.79-.048-2.698-.073-2.339-.097-2.266-.122-.571-.121L0 11.784l.055-.352.48-.321.686.06 1.52.103 2.278.158 1.652.097 2.449.255h.389l.055-.157-.134-.098-.103-.097-2.358-1.596-2.552-1.688-1.336-.972-.724-.491-.364-.462-.158-1.008.656-.722.881.06.225.061.893.686 1.908 1.476 2.491 1.833.365.304.145-.103.019-.073-.164-.274-1.355-2.446-1.446-2.49-.644-1.032-.17-.619a2.97 2.97 0 01-.104-.729L6.283.134 6.696 0l.996.134.42.364.62 1.414 1.002 2.229 1.555 3.03.456.898.243.832.091.255h.158V9.01l.128-1.706.237-2.095.23-2.695.08-.76.376-.91.747-.492.584.28.48.685-.067.444-.286 1.851-.559 2.903-.364 1.942h.212l.243-.242.985-1.306 1.652-2.064.73-.82.85-.904.547-.431h1.033l.76 1.129-.34 1.166-1.064 1.347-.881 1.142-1.264 1.7-.79 1.36.073.11.188-.02 2.856-.606 1.543-.28 1.841-.315.833.388.091.395-.328.807-1.969.486-2.309.462-3.439.813-.042.03.049.061 1.549.146.662.036h1.622l3.02.225.79.522.474.638-.079.485-1.215.62-1.64-.389-3.829-.91-1.312-.329h-.182v.11l1.093 1.068 2.006 1.81 2.509 2.33.127.578-.322.455-.34-.049-2.205-1.657-.851-.747-1.926-1.62h-.128v.17l.444.649 2.345 3.521.122 1.08-.17.353-.608.213-.668-.122-1.374-1.925-1.415-2.167-1.143-1.943-.14.08-.674 7.254-.316.37-.729.28-.607-.461-.322-.747.322-1.476.389-1.924.315-1.53.286-1.9.17-.632-.012-.042-.14.018-1.434 1.967-2.18 2.945-1.726 1.845-.414.164-.717-.37.067-.662.401-.589 2.388-3.036 1.44-1.882.93-1.086-.006-.158h-.055L4.132 18.56l-1.13.146-.487-.456.061-.746.231-.243 1.908-1.312-.006.006z"/></svg>
-          <span class="agent-name">Claude</span>
-        </div>
-        <div class="agent-logo a-codex">
-          <svg class="agent-ico" viewBox="0 0 24 24" width="30" height="30" fill="currentColor" aria-hidden="true"><path d="M8.086.457a6.105 6.105 0 013.046-.415c1.333.153 2.521.72 3.564 1.7a.117.117 0 00.107.029c1.408-.346 2.762-.224 4.061.366l.063.03.154.076c1.357.703 2.33 1.77 2.918 3.198.278.679.418 1.388.421 2.126a5.655 5.655 0 01-.18 1.631.167.167 0 00.04.155 5.982 5.982 0 011.578 2.891c.385 1.901-.01 3.615-1.183 5.14l-.182.22a6.063 6.063 0 01-2.934 1.851.162.162 0 00-.108.102c-.255.736-.511 1.364-.987 1.992-1.199 1.582-2.962 2.462-4.948 2.451-1.583-.008-2.986-.587-4.21-1.736a.145.145 0 00-.14-.032c-.518.167-1.04.191-1.604.185a5.924 5.924 0 01-2.595-.622 6.058 6.058 0 01-2.146-1.781c-.203-.269-.404-.522-.551-.821a7.74 7.74 0 01-.495-1.283 6.11 6.11 0 01-.017-3.064.166.166 0 00.008-.074.115.115 0 00-.037-.064 5.958 5.958 0 01-1.38-2.202 5.196 5.196 0 01-.333-1.589 6.915 6.915 0 01.188-2.132c.45-1.484 1.309-2.648 2.577-3.493.282-.188.55-.334.802-.438.286-.12.573-.22.861-.304a.129.129 0 00.087-.087A6.016 6.016 0 015.635 2.31C6.315 1.464 7.132.846 8.086.457zm-.804 7.85a.848.848 0 00-1.473.842l1.694 2.965-1.688 2.848a.849.849 0 001.46.864l1.94-3.272a.849.849 0 00.007-.854l-1.94-3.393zm5.446 6.24a.849.849 0 000 1.695h4.848a.849.849 0 000-1.696h-4.848z"/></svg>
-          <span class="agent-name">Codex</span>
-        </div>
-        <div class="agent-logo a-antigravity">
-          <svg class="agent-ico" viewBox="0 0 24 24" width="30" height="30" fill="currentColor" aria-hidden="true"><path d="M21.751 22.607c1.34 1.005 3.35.335 1.508-1.508C17.73 15.74 18.904 1 12.037 1 5.17 1 6.342 15.74.815 21.1c-2.01 2.009.167 2.511 1.507 1.506 5.192-3.517 4.857-9.714 9.715-9.714 4.857 0 4.522 6.197 9.714 9.715z"/></svg>
-          <span class="agent-name">Antigravity</span>
-        </div>
-        <div class="agent-logo a-opencode">
-          <svg class="agent-ico" viewBox="0 0 24 24" width="30" height="30" fill="currentColor" fill-rule="evenodd" aria-hidden="true"><path d="M16 6H8v12h8V6zm4 16H4V2h16v20z"/></svg>
-          <span class="agent-name">OpenCode</span>
-        </div>
-        <div class="agent-logo a-gemini">
-          <svg class="agent-ico" viewBox="0 0 24 24" width="30" height="30" aria-hidden="true"><defs><linearGradient id="gemGrad" x1="2" y1="20" x2="22" y2="4" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#1C7DFF"/><stop offset="0.52" stop-color="#9168E8"/><stop offset="1" stop-color="#D96570"/></linearGradient></defs><path fill="url(#gemGrad)" d="M20.616 10.835a14.147 14.147 0 01-4.45-3.001 14.111 14.111 0 01-3.678-6.452.503.503 0 00-.975 0 14.134 14.134 0 01-3.679 6.452 14.155 14.155 0 01-4.45 3.001c-.65.28-1.318.505-2.002.678a.502.502 0 000 .975c.684.172 1.35.397 2.002.677a14.147 14.147 0 014.45 3.001 14.112 14.112 0 013.679 6.453.502.502 0 00.975 0c.172-.685.397-1.351.677-2.003a14.145 14.145 0 013.001-4.45 14.113 14.113 0 016.453-3.678.503.503 0 000-.975 13.245 13.245 0 01-2.003-.678z"/></svg>
-          <span class="agent-name">Gemini</span>
-        </div>
-        <div class="agent-logo a-cursor">
-          <svg class="agent-ico" viewBox="0 0 24 24" width="30" height="30" fill="currentColor" aria-hidden="true"><path d="M22.106 5.68L12.5.135a.998.998 0 00-.998 0L1.893 5.68a.84.84 0 00-.419.726v11.186c0 .3.16.577.42.727l9.607 5.547a.999.999 0 00.998 0l9.608-5.547a.84.84 0 00.42-.727V6.407a.84.84 0 00-.42-.726zm-.603 1.176L12.228 22.92c-.063.108-.228.064-.228-.061V12.34a.59.59 0 00-.295-.51l-9.11-5.26c-.107-.062-.063-.228.062-.228h18.55c.264 0 .428.286.296.514z"/></svg>
-          <span class="agent-name">Cursor</span>
+      <div class="hero-stage brk">
+        <span class="c tl"></span><span class="c tr"></span><span class="c bl"></span><span class="c br"></span>
+        <span class="stage-tag">[ SANDBOX ] <span class="em">FIG.01</span> // network-policy membrane</span>
+        <div id="heroCube"></div>
+        <div class="callouts">
+          <svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+            <polyline points="15,33 34,33 45,45" />
+            <polyline points="85,42 66,42 56,48" />
+            <polyline points="85,66 66,66 56,55" />
+            <polyline points="15,72 40,72 46,57" />
+            <circle cx="45" cy="45" r="0.9" />
+            <circle cx="56" cy="48" r="0.9" />
+            <circle cx="56" cy="55" r="0.9" />
+            <circle cx="46" cy="57" r="0.9" />
+          </svg>
+          <span class="callout tl"><span class="code"><img src="resources/brand-mono/claude.svg" alt="">AGT·01</span><span class="name">Agent</span></span>
+          <span class="callout r"><span class="code">MCP·02</span><span class="name">Tools</span></span>
+          <span class="callout br"><span class="code">FS·03</span><span class="name">Filesystem</span></span>
+          <span class="callout bl"><span class="code">NET·04</span><span class="name">Network policy</span></span>
         </div>
       </div>
     </div>
+  </div>
+  <span class="vcap">Run wild inside the box · your host never feels a thing</span>
+</header>
 
-    <!-- Isolated -->
-    <div class="bento-tile bento-c">
-      <div class="feat-icon c"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg></div>
-      <h3 class="feat-title">Isolated by default</h3>
-      <p class="feat-desc">Each sandbox is its own microVM with a separate filesystem and network. Your host stays untouched.</p>
-    </div>
-
-    <!-- Network policy -->
-    <div class="bento-tile bento-d">
-      <div class="feat-icon b"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z"/></svg></div>
-      <h3 class="feat-title">Network policies</h3>
-      <p class="feat-desc">Decide exactly which domains an agent can reach. Everything else is blocked. No exfiltration, no surprises.</p>
-    </div>
-
-    <!-- Ephemeral & customizable -->
-    <div class="bento-tile bento-e light-shot">
-      <div class="feat-icon a"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l9 5-9 5-9-5z"/><path d="M3 13l9 5 9-5"/><path d="M3 9l9 5 9-5"/></svg></div>
-      <h3 class="feat-title">Ephemeral, and yours to shape</h3>
-      <p class="feat-desc">Spin up a disposable sandbox in seconds, then layer in your own tools, credentials and policies with kits and mixins. Throw it away when you're done.</p>
-      <div class="bento-shot-wrap"><img class="bento-shot" src="screenshots/app-newsandbox.png" alt="den new-sandbox dialog: pick an agent, base image, workspace and isolation"></div>
-    </div>
-
-    <!-- Dashboard -->
-    <div class="bento-tile bento-f light-shot">
-      <div class="feat-icon c"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg></div>
-      <h3 class="feat-title">Watch them all work</h3>
-      <p class="feat-desc">Every sandbox, its agent, status and uptime in one dashboard. Run a whole fleet at once.</p>
-      <div class="bento-shot-wrap"><img class="bento-shot" src="screenshots/app-dashboard.png" alt="den home dashboard showing running sandboxes grouped by project"></div>
-    </div>
-
-    <!-- Git support -->
-    <div class="bento-tile bento-g">
-      <div class="feat-icon b"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="3" x2="6" y2="15"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M18 9a9 9 0 0 1-9 9"/></svg></div>
-      <div class="g-copy">
-        <h3 class="feat-title">A branch per sandbox, review every diff</h3>
-        <p class="feat-desc">Clone-isolate your repo and the agent commits freely on its own branch, your working tree untouched. Review the full diff and merge back when it's ready.</p>
+<!-- ─── SPEC BAND ─── -->
+<section class="band">
+  <div class="wrap">
+    <div class="band-card brk" data-snap>
+      <span class="c tl"></span><span class="c tr"></span><span class="c bl"></span><span class="c br"></span>
+      <div class="band-col">
+        <div class="band-head"><span class="sq"></span><span class="kick">Works_with // any agent</span></div>
+        <div class="band-logos">
+          <img src="resources/brand-mono/claude.svg" alt="Claude">
+          <img src="resources/brand-mono/codex.svg" alt="Codex">
+          <img src="resources/brand-mono/gemini.svg" alt="Gemini">
+          <img src="resources/brand-mono/cursor.svg" alt="Cursor">
+        </div>
+        <div class="stat-num">00</div>
+        <div class="stat-label">// blast radius on your host machine</div>
       </div>
-      <div class="g-chips">
-        <span class="g-chip"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="3" x2="6" y2="15"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M18 9a9 9 0 0 1-9 9"/></svg>feat/oauth-pkce</span>
-        <span class="g-chip mono">--clone</span>
-        <span class="g-chip mono"><span class="g-add">+312</span> <span class="g-del">−87</span></span>
-        <span class="g-chip">Review &amp; merge</span>
+      <div class="band-col">
+        <div class="band-head"><span class="sq"></span><span class="kick">Isolated // by default</span></div>
+        <div class="band-logos">
+          <img src="resources/brand-mono/docker.svg" alt="Docker">
+          <img src="resources/brand-mono/opencode.svg" alt="OpenCode">
+          <img src="resources/brand-mono/droid.svg" alt="Droid">
+        </div>
+        <div class="stat-num">100<span class="em">%</span></div>
+        <div class="stat-label">// private daemon, filesystem &amp; network</div>
+      </div>
+      <div class="band-col">
+        <div class="band-head"><span class="sq"></span><span class="kick">Get_started</span></div>
+        <p class="band-copy">Point den at your codebase and drop any agent into its own microVM. Ephemeral, policed, and disposable.</p>
+        <a href="#" class="btn-dark notch">Sign_up →</a>
       </div>
     </div>
-
   </div>
 </section>
 
-<!-- ── HOW IT WORKS ── -->
-<section class="how" id="how">
-  <div class="section-eyebrow">How it works</div>
-  <h2 class="section-title">From clone to merge<br>in four steps</h2>
-  <p class="section-sub">Point den at a repo, pick your agent, and get out of its way. It runs sealed inside a box the whole time.</p>
+<!-- ─── FEATURE CARDS ─── -->
+<section class="feat" id="how">
+  <div class="wrap">
+    <div class="sec-head">
+      <h2 class="sec-title">HOW_IT<br><span class="dim">WORKS.</span></h2>
+      <div class="sec-index">[ PROTOCOL ]<br>03 // modules</div>
+    </div>
+    <div class="feat-grid" data-snap>
 
-  <div class="steps" id="steps">
-    <div class="step">
-      <div class="step-num">1</div>
-      <h3 class="step-title">Spin up a sandbox</h3>
-      <p class="step-desc">Pick an agent, a base image and a repo. den boots a fresh, disposable box in seconds.</p>
-    </div>
-    <div class="step">
-      <div class="step-num">2</div>
-      <h3 class="step-title">Set the guardrails</h3>
-      <p class="step-desc">Lock down the network with a policy and layer in your own tools and credentials. Guardrails on the box, not the agent.</p>
-    </div>
-    <div class="step">
-      <div class="step-num">3</div>
-      <h3 class="step-title">Let it run YOLO</h3>
-      <p class="step-desc">Flip on bypass-permissions and walk away. No more yes / no / cancel. The agent works unattended and can't escape.</p>
-    </div>
-    <div class="step">
-      <div class="step-num">4</div>
-      <h3 class="step-title">Review &amp; merge</h3>
-      <p class="step-desc">Every change lands on its own branch. Read the full diff, then merge back into your working tree when it's ready.</p>
+      <div class="fcard brk">
+        <span class="c tl"></span><span class="c tr"></span><span class="c bl"></span><span class="c br"></span>
+        <div class="fcard-top">
+          <span class="fcard-tag">MOD·01 / Isolate</span>
+          <svg class="fcard-icon" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" stroke="currentColor" stroke-width="1.6"/><rect x="8" y="8" width="8" height="8" stroke="currentColor" stroke-width="1.6"/></svg>
+          <div class="fcard-title">Own microVM</div>
+          <p class="fcard-copy">Each agent boots into a disposable microVM with its own private Docker daemon, filesystem and kernel. Nothing touches your host.</p>
+        </div>
+        <div class="fcard-stats">
+          <div class="fstat"><b>1:1</b><span>vm per agent</span></div>
+          <div class="fstat"><b>0</b><span>host access</span></div>
+          <div class="fstat"><b>&lt;2s</b><span>cold boot</span></div>
+          <div class="fstat"><b>∞</b><span>disposable</span></div>
+        </div>
+        <div class="fcard-foot"><span class="lbl">// walled off</span><span class="arw">→</span></div>
+      </div>
+
+      <div class="fcard brk">
+        <span class="c tl"></span><span class="c tr"></span><span class="c bl"></span><span class="c br"></span>
+        <div class="fcard-top">
+          <span class="fcard-tag">MOD·02 / Police</span>
+          <svg class="fcard-icon" viewBox="0 0 24 24" fill="none"><path d="M12 2l8 3v6c0 5-3.5 8-8 11-4.5-3-8-6-8-11V5l8-3z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+          <div class="fcard-title">Policed network</div>
+          <p class="fcard-copy">Deny-by-default egress. Requests hit the policy membrane and get blocked unless you allow the domain. Escapes are the exception.</p>
+        </div>
+        <div class="fcard-stats">
+          <div class="fstat"><b class="em">deny</b><span>by default</span></div>
+          <div class="fstat"><b>403</b><span>on block</span></div>
+          <div class="fstat"><b>allow</b><span>per domain</span></div>
+          <div class="fstat"><b>log</b><span>every hit</span></div>
+        </div>
+        <div class="fcard-foot"><span class="lbl">// egress control</span><span class="arw">→</span></div>
+      </div>
+
+      <div class="fcard brk">
+        <span class="c tl"></span><span class="c tr"></span><span class="c bl"></span><span class="c br"></span>
+        <div class="fcard-top">
+          <span class="fcard-tag">MOD·03 / Unleash</span>
+          <svg class="fcard-icon" viewBox="0 0 24 24" fill="none"><path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+          <div class="fcard-title">Full YOLO</div>
+          <p class="fcard-copy">Turn off the guardrails once. No more yes / no / cancel. The agent installs packages, spins up containers and rewrites code unattended.</p>
+        </div>
+        <div class="fcard-stats">
+          <div class="fstat"><b>0</b><span>prompts</span></div>
+          <div class="fstat"><b>∞</b><span>autonomy</span></div>
+          <div class="fstat"><b>yes</b><span>sudo ok</span></div>
+          <div class="fstat"><b>1×</b><span>click setup</span></div>
+        </div>
+        <div class="fcard-foot"><span class="lbl">// zero babysitting</span><span class="arw">→</span></div>
+      </div>
+
     </div>
   </div>
 </section>
 
-<!-- ── CTA ── -->
-<section class="cta-section" id="cta">
-  <h2 class="cta-title">Ready to <em>let go of the wheel</em>?</h2>
-  <p class="cta-sub">den is free to try. Bring your sbx account and let your agents run.</p>
-  <div class="cta-actions">
-    <a href="#" class="btn-white">Download den</a>
-    <a href="https://docs.docker.com/ai/sandboxes/" target="_blank" rel="noopener" class="btn-ghost-w">Read sbx docs →</a>
+<!-- ─── PRODUCT MOCKUP ─── -->
+<section class="mockup" id="feature">
+  <div class="wrap">
+    <div class="mockup-head">
+      <div class="band-head" style="justify-content:center"><span class="sq"></span><span class="kick">The_app <span class="em">// FIG.02</span></span></div>
+      <h2 class="sec-title" style="margin-top:14px">EVERY AGENT,<br><span class="dim">ITS OWN BOX.</span></h2>
+      <p class="mockup-sub">Spin up disposable sandboxes, drop any agent in, and watch it work — all from a single light, quiet interface.</p>
+    </div>
+
+    <div class="app-shell brk" data-snap>
+      <span class="c tl"></span><span class="c tr"></span><span class="c bl"></span><span class="c br"></span>
+      <div class="app-window">
+        <div class="aw-bar">
+          <div class="aw-dots"><span class="aw-dot r"></span><span class="aw-dot y"></span><span class="aw-dot g"></span></div>
+          <div class="aw-title"><b>feral-cosmos</b> <span class="aw-run">· Working… 6m 31s</span></div>
+          <div class="aw-user"><span class="aw-av">JA</span>javier@docker.com</div>
+        </div>
+
+        <div class="aw-body">
+          <aside class="aw-sb">
+            <div class="aw-navitem on"><span class="aw-ic"></span>Home</div>
+            <div class="aw-sec">Sandboxes</div>
+            <div class="aw-sbx">
+              <span class="aw-sbav" style="background:#2563EB">ES</span>
+              <span class="aw-sbtext"><span class="aw-sbname">electric-satellite</span><span class="aw-sbsub">Waiting for you</span></span>
+            </div>
+            <div class="aw-sbx active">
+              <span class="aw-sbav" style="background:#7C3AED">FC</span>
+              <span class="aw-sbtext"><span class="aw-sbname">feral-cosmos</span><span class="aw-sbsub work">Working…</span></span>
+            </div>
+            <div class="aw-sbx">
+              <span class="aw-sbav" style="background:#0EA5A0">LC</span>
+              <span class="aw-sbtext"><span class="aw-sbname">lively-canyon</span><span class="aw-sbsub">Waiting for you</span></span>
+            </div>
+            <div class="aw-sbx">
+              <span class="aw-sbav" style="background:#9CA3AF">HS</span>
+              <span class="aw-sbtext"><span class="aw-sbname">hidden-satellite</span><span class="aw-sbsub">agentic-platform-ff</span></span>
+            </div>
+            <div class="aw-sec">Projects</div>
+            <div class="aw-navitem"><span class="aw-ic"></span>den</div>
+            <div class="aw-navitem"><span class="aw-ic"></span>gordon-sbx</div>
+            <div class="aw-sbfoot"><span class="d"></span>sbx · connected</div>
+          </aside>
+
+          <div class="aw-main">
+            <div class="aw-mhead">
+              <span class="aw-mtitle">feral-cosmos</span>
+              <span class="aw-chip"><img src="resources/brand-mono/claude.svg" alt="">claude</span>
+              <span class="aw-mstatus"><span class="d"></span>Running</span>
+              <span class="aw-stop">■ Stop</span>
+            </div>
+            <div class="aw-tabs">
+              <span class="aw-tab on">Agent</span>
+              <span class="aw-tab">Shell</span>
+            </div>
+            <div class="aw-term">
+              <div class="row"><span class="warn">⚠</span><span class="warn">5 MCP servers need authentication · run /mcp</span></div>
+              <div style="height:8px"></div>
+              <div class="row"><span class="prompt">›</span><span class="prompt">the agent status sticks on "working" after a cancelled turn — fix it</span></div>
+              <div style="height:8px"></div>
+              <div class="row"><span class="bullet">●</span><span>I'll trace how the state is set, then handle the interrupted-turn case.</span></div>
+              <div class="row"><span class="bullet">●</span><span class="tool">Read(src/main/index.ts)</span></div>
+              <div class="row"><span class="dim">&nbsp;&nbsp;└</span><span class="dim">Read 142 lines</span></div>
+              <div class="row"><span class="bullet">●</span><span class="tool">Grep(setAgentState)</span></div>
+              <div class="row"><span class="dim">&nbsp;&nbsp;└</span><span class="dim">6 matches in 1 file</span></div>
+              <div class="row"><span class="bullet">●</span><span class="tool">Update(src/main/index.ts)</span></div>
+              <div class="row"><span class="dim">&nbsp;&nbsp;└</span><span class="add">Updated with 8 additions and 3 removals</span></div>
+            </div>
+            <div class="aw-input"><span class="car">›</span>Reply to feral-cosmos…</div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </section>
 
-<!-- ── FOOTER ── -->
+<!-- ─── CLOSING ─── -->
+<section class="closing">
+  <div class="wrap closing-grid">
+    <h2>RUN WILD INSIDE<br>THE BOX. <span class="dim">YOUR MACHINE<br>NEVER FEELS A THING.</span></h2>
+    <div class="closing-side">
+      <b>[ Full YOLO, zero babysitting ]</b>
+      Stop clicking yes / no / cancel. Turn off the guardrails once and let the agent finish the job on its own.
+      <div class="closing-actions">
+        <a href="#" class="btn-ember notch"><img class="cta-ico" src="resources/icon-dark.svg" alt="">Download</a>
+        <a href="https://docs.docker.com/ai/sandboxes/" target="_blank" rel="noopener" class="btn-ghost notch">Read_docs →</a>
+      </div>
+    </div>
+  </div>
+</section>
+
 <footer>
-  <a href="#" class="footer-logo">
-    <img src="icon-light.svg" alt="">
-    <span class="footer-logo-text">den</span>
-  </a>
-  <ul class="footer-links">
-    <li><a href="#">Docs</a></li>
-    <li><a href="#">GitHub</a></li>
-    <li><a href="https://docs.docker.com/ai/sandboxes/" target="_blank" rel="noopener">Docker Sandboxes</a></li>
-    <li><a href="#">Privacy</a></li>
-  </ul>
-  <span class="footer-copy">© 2026 den. Built on Docker Sandboxes</span>
+  <div class="wrap footer-row">
+    <a href="./" class="nav-logo">
+      <span class="nav-mark"><img src="resources/icon-light.svg" alt="den"></span>
+      <span class="nav-logo-text">den</span>
+    </a>
+    <ul class="footer-links">
+      <li><a href="#">Platform</a></li>
+      <li><a href="#how">How_it_works</a></li>
+      <li><a href="https://docs.docker.com/ai/sandboxes/" target="_blank" rel="noopener">Docs</a></li>
+      <li><a href="#">Company</a></li>
+    </ul>
+    <div class="footer-meta">by Docker Labs · Experimental · SBX.∞</div>
+  </div>
 </footer>
 
 <script>
-  // Nav scroll behaviour
+  // nav shadow on scroll
   const nav = document.getElementById('nav');
-  addEventListener('scroll', () => {
-    nav.classList.toggle('scrolled', scrollY > 24);
-  }, { passive: true });
+  addEventListener('scroll', () => nav.classList.toggle('scrolled', scrollY > 8), { passive: true });
 
-  // Intersection Observer: feature cards
-  const cardObserver = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      if (!entry.isIntersecting) return;
-      const cards = entry.target.querySelectorAll('.bento-tile');
-      cards.forEach((c, i) => {
-        setTimeout(() => c.classList.add('visible'), i * 90);
+  // ── vertical grid snap ──
+  // A box's Y position depends on the (variable) height of everything above it,
+  // so static CSS can't guarantee it lands on a horizontal gridline. This pass
+  // nudges each [data-snap] box so its TOP sits on a gridline (y ≡ 32, matching
+  // the backplate) and forces its HEIGHT to a whole number of 64px modules, so
+  // the BOTTOM lands on a line too. Re-runs whenever geometry can change.
+  (function () {
+    const M = 64, PHASE = 32;
+    const boxes = () => [...document.querySelectorAll('[data-snap]')];
+    function snap() {
+      const list = boxes();
+      // Reset, and zero the bottom margin of each box's preceding sibling so the
+      // box's own margin-top can't collapse with it — that collapse (max, not sum)
+      // is what made the nudge non-linear. The gap above is then owned entirely by
+      // the snap margin, so it stays a clean 0–1 module.
+      list.forEach(el => {
+        el.style.marginTop = ''; el.style.height = '';
+        const prev = el.previousElementSibling;
+        if (prev && !prev.hasAttribute('data-snap')) prev.style.marginBottom = '0';
       });
-      cardObserver.unobserve(entry.target);
-    });
-  }, { threshold: 0.12 });
-
-  const featGrid = document.getElementById('featGrid');
-  if (featGrid) cardObserver.observe(featGrid);
-
-  // Intersection Observer: how-it-works steps (staggered reveal)
-  const stepObserver = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      if (!entry.isIntersecting) return;
-      entry.target.querySelectorAll('.step').forEach((s, i) => {
-        setTimeout(() => s.classList.add('visible'), i * 130);
-      });
-      stepObserver.unobserve(entry.target);
-    });
-  }, { threshold: 0.2 });
-
-  const steps = document.getElementById('steps');
-  if (steps) stepObserver.observe(steps);
-
-  // Browser mockup
-  const browserObs = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        entry.target.classList.add('visible');
-        browserObs.unobserve(entry.target);
+      void document.body.offsetHeight;                       // reflow with styles cleared
+      for (const el of list) {                               // top-to-bottom; measure each live
+        const top = el.getBoundingClientRect().top + scrollY;
+        let targetTop = Math.ceil((top - PHASE) / M) * M + PHASE;   // next gridline at/below → margin stays ≥ 0
+        if (targetTop - top < 24) targetTop += M;                   // keep a little breathing room above the box
+        el.style.marginTop = (targetTop - top) + 'px';
+        const h = el.getBoundingClientRect().height;
+        el.style.height = Math.max(M, Math.ceil(h / M) * M) + 'px';
       }
-    });
-  }, { threshold: 0.15 });
-
-  const liveShot = document.getElementById('liveShot');
-  if (liveShot) browserObs.observe(liveShot);
-
-  // Animate log lines
-  const logRows = document.querySelectorAll('.log-row');
-  logRows.forEach(r => { r.style.opacity = '0'; r.style.transition = 'opacity 0.35s ease'; });
-
-  const logsObs = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      if (!entry.isIntersecting) return;
-      logRows.forEach((r, i) => {
-        setTimeout(() => { r.style.opacity = '1'; }, i * 260);
-      });
-      logsObs.unobserve(entry.target);
-    });
-  }, { threshold: 0.5 });
-
-  const logsEl = document.getElementById('uiLogs');
-  if (logsEl) logsObs.observe(logsEl);
-
-  // Smooth scroll for all hash links
-  document.querySelectorAll('a[href^="#"]').forEach(a => {
-    a.addEventListener('click', e => {
-      const id = a.getAttribute('href');
-      if (id === '#') return;
-      const target = document.querySelector(id);
-      if (target) {
-        e.preventDefault();
-        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
-    });
-  });
-</script>
-
-<!-- ── HERO: inside-the-glass-box scene (Three.js) ── -->
-<script type="module">
-  import * as THREE from 'three';
-  import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
-  import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
-  import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
-  import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
-  import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
-  import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
-
-  const canvas = document.getElementById('heroCanvas');
-  const hero = document.querySelector('.hero');
-  if (!canvas || !hero) throw new Error('hero canvas missing');
-
-  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  // EXPERIMENT: dolly the camera out on scroll so the 3D box recedes/shrinks.
-  // Set to false to keep the camera fixed inside the box.
-  const SHRINK_ON_SCROLL = true;
-  let W = hero.clientWidth, H = hero.clientHeight;
-
-  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
-  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
-  renderer.setSize(W, H, false);
-  renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.06;
-
-  const scene = new THREE.Scene();
-  scene.background = new THREE.Color(0x050506);
-
-  // Camera sits OUTSIDE the cube; the cube is shown edge-on and tilted toward us.
-  const camera = new THREE.PerspectiveCamera(42, W / H, 0.1, 100);
-  const S = 5;                                   // half-size of the cube
-  const corner = new THREE.Vector3(S, S, S);
-  camera.position.set(0, 1.4, 28);
-  camera.lookAt(0, 0.3, 0);
-
-  const DISP = 0.8;                              // fixed dispersion strength for the page
-  const uniforms = {
-    uTime:   { value: 0 },
-    uDisp:   { value: DISP },
-    uCorner: { value: corner.clone() },
-    uHi:     { value: new THREE.Color(0xffe0bc) },
-    uMid:    { value: new THREE.Color(0xdd5a1c) },
-    uDark:   { value: new THREE.Color(0x0a0503) },
-    uHalf:   { value: S },
-  };
-
-  const boxMat = new THREE.ShaderMaterial({
-    side: THREE.DoubleSide,
-    transparent: true,
-    depthWrite: false,
-    blending: THREE.AdditiveBlending,
-    uniforms,
-    vertexShader: /* glsl */`
-      varying vec3 vPos;
-      varying vec3 vN;
-      varying vec3 vWorld;
-      void main(){
-        vPos = position;
-        vN = normal;
-        vWorld = (modelMatrix * vec4(position, 1.0)).xyz;
-        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-      }
-    `,
-    fragmentShader: /* glsl */`
-      precision highp float;
-      varying vec3 vPos;
-      varying vec3 vN;
-      varying vec3 vWorld;
-      uniform float uTime, uHalf, uDisp;
-      uniform vec3 uCorner, uHi, uMid, uDark;
-
-      vec3 ramp(float b){
-        return (b < 0.55)
-          ? mix(uDark, uMid, smoothstep(0.0, 0.55, b))
-          : mix(uMid, uHi, smoothstep(0.55, 1.2, b));
-      }
-
-      void main(){
-        vec3 p = vPos;
-        vec3 N = normalize(vN);
-        vec3 V = normalize(cameraPosition - vWorld);
-        float fres = pow(1.0 - abs(dot(V, N)), 2.6);       // grazing-angle glass sheen
-
-        // glow along the 12 edges + 8 corners of the cube (crystal facets)
-        vec3 a = abs(p);
-        float m1 = max(a.x, max(a.y, a.z));
-        float m3 = min(a.x, min(a.y, a.z));
-        float m2 = a.x + a.y + a.z - m1 - m3;
-        float edge   = exp(-(uHalf - m2) * 1.5);
-        float corner = exp(-(uHalf - m3) * 0.9);
-
-        // warm light pooling toward the lit corner + faint internal shafts
-        float dCorner = length(p - uCorner);
-        float glow = pow(1.0 - clamp(dCorner / (2.0 * uHalf), 0.0, 1.0), 2.0);
-        float ang = atan(length(p.xy - uCorner.xy), (p.z - uCorner.z));
-        float shafts = pow(0.5 + 0.5 * sin(ang * 8.0 + uTime * 0.5 - dCorner * 0.7), 3.0);
-
-        float b = 0.10 + 1.1 * edge + 0.85 * corner + 0.45 * glow + 0.3 * shafts * glow + fres * 0.65;
-        b *= 1.0 + 0.03 * sin(dCorner * 5.0 - uTime * 0.4);
-        b = clamp(b, 0.0, 1.6);
-
-        vec3 col = ramp(b);
-        // prismatic Fresnel rim: rainbow split scaled by dispersion
-        vec3 spec = 0.5 + 0.5 * cos(6.2831 * (fres * 1.2 + vec3(0.0, 0.33, 0.67)));
-        col += pow(fres, 2.2) * spec * (0.4 + 0.4 * glow) * (0.5 + 0.5 * uDisp);
-
-        // translucent: faces faint, edges/corners/rim strong -> glowing crystal
-        float alpha = clamp(0.06 + 0.85 * edge + 0.6 * corner + 0.28 * glow + 0.4 * fres, 0.0, 1.0);
-        gl_FragColor = vec4(col, alpha);
-      }
-    `,
-  });
-  const box = new THREE.Mesh(new RoundedBoxGeometry(S * 2, S * 2, S * 2, 10, 2.1), boxMat);
-  box.position.set(6.6, 0.4, 0);                 // sit to the right, clear of the left-aligned copy
-  box.rotation.y = Math.PI / 4;                  // edge-on: one vertical edge faces the camera
-  box.rotation.x = -Math.PI / 6;                 // tilt 30 deg toward the camera (top visible)
-  scene.add(box);
-
-  // ── Post: bloom + strong chromatic aberration + vignette/grain ──
-  // Multisampled + HDR render target: the canvas MSAA doesn't reach the composer,
-  // so without this the thin bright crystal edges alias and flicker as it rotates.
-  const composerRT = new THREE.WebGLRenderTarget(W, H, { samples: 4, type: THREE.HalfFloatType });
-  const composer = new EffectComposer(renderer, composerRT);
-  composer.addPass(new RenderPass(scene, camera));
-  const bloom = new UnrealBloomPass(new THREE.Vector2(W, H), 0.5, 0.7, 0.72);
-  composer.addPass(bloom);
-
-  const Grade = {
-    uniforms: { tDiffuse: { value: null }, uTime: { value: 0 }, uRes: { value: new THREE.Vector2(W, H) }, uDisp: { value: DISP } },
-    vertexShader: `varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);} `,
-    fragmentShader: /* glsl */`
-      varying vec2 vUv; uniform sampler2D tDiffuse; uniform float uTime, uDisp; uniform vec2 uRes;
-      void main(){
-        vec2 c = vUv - 0.5;
-        float d = dot(c, c);
-        vec2 off = c * (0.004 + d * 0.09) * uDisp;
-        float r  = texture2D(tDiffuse, vUv - off).r;
-        float rg = texture2D(tDiffuse, vUv - off * 0.5).r;
-        float g  = texture2D(tDiffuse, vUv).g;
-        float bg = texture2D(tDiffuse, vUv + off * 0.5).b;
-        float b  = texture2D(tDiffuse, vUv + off).b;
-        vec3 col = vec3(r * 0.6 + rg * 0.4, g, b * 0.6 + bg * 0.4);
-        col *= smoothstep(1.32, 0.18, d * 1.7);
-        float grain = fract(sin(dot(vUv * uRes + uTime, vec2(12.9898, 78.233))) * 43758.5453);
-        col += (grain - 0.5) * 0.014;
-        gl_FragColor = vec4(col, 1.0);
-      }
-    `,
-  };
-  const grade = new ShaderPass(Grade);
-  composer.addPass(grade);
-  composer.addPass(new OutputPass());
-
-  // ── Interaction: mouse looks around; page scroll tilts the camera up ──
-  const target = { x: 0, y: 0 }, ease = { x: 0, y: 0 };
-  addEventListener('pointermove', (e) => {
-    target.x = (e.clientX / innerWidth - 0.5) * 2;
-    target.y = (e.clientY / innerHeight - 0.5) * 2;
-  }, { passive: true });
-  let easeS = 0;                                 // eased scroll progress through the hero
-
-  function resize(){
-    W = hero.clientWidth; H = hero.clientHeight;
-    renderer.setSize(W, H, false);
-    composer.setSize(W, H);
-    bloom.setSize(W, H);
-    camera.aspect = W / H; camera.updateProjectionMatrix();
-    grade.uniforms.uRes.value.set(W, H);
-  }
-  addEventListener('resize', resize, { passive: true });
-
-  const clock = new THREE.Clock();
-  const BASE_YAW = Math.PI / 4;                  // 45deg: an edge faces the camera
-  const BASE_PITCH = -Math.PI / 6;               // 30deg tilt toward the camera
-
-  function tick(){
-    const t = clock.getElapsedTime();
-    uniforms.uTime.value = t;
-    grade.uniforms.uTime.value = t;
-
-    // only render while the hero is on screen
-    if (hero.getBoundingClientRect().bottom <= 0){ requestAnimationFrame(tick); return; }
-
-    if (!reduceMotion){
-      ease.x += (target.x - ease.x) * 0.05;
-      ease.y += (target.y - ease.y) * 0.05;
     }
-    const prog = Math.min(1, Math.max(0, scrollY / ((hero.clientHeight || 1) * 0.9)));
-    easeS += (prog - easeS) * 0.08;
+    let raf;
+    const schedule = () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(snap); };
+    addEventListener('load', schedule);
+    addEventListener('resize', schedule);
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(schedule);
+    schedule();
+  })();
 
-    // rotate the cube: base edge-on + 30deg tilt, plus mouse parallax, gentle idle
-    // drift, and a slow spin as you scroll down.
-    const idle = reduceMotion ? 0 : Math.sin(t * 0.22) * 0.05;
-    box.rotation.y = BASE_YAW + idle + ease.x * 0.5 + easeS * 1.1;
-    box.rotation.x = BASE_PITCH - ease.y * 0.28 + Math.sin(t * 0.18) * 0.02;
-
-    // SHRINK_ON_SCROLL: dolly the camera back so the cube recedes as you scroll
-    const camZ = SHRINK_ON_SCROLL ? 28 + easeS * 20 : 28;
-    camera.position.set(ease.x * 0.7, 1.4 - ease.y * 0.5, camZ);
-    camera.lookAt(box.position.x * 0.34, 0.3, 0);
-
-    composer.render();
-    requestAnimationFrame(tick);
-  }
-
-  // Reveal once the first frame is painted.
-  requestAnimationFrame(() => {
-    resize();
-    composer.render();
-    canvas.classList.add('lit');
-    tick();
-  });
-</script>
-
-<!-- ── Image lightbox ── -->
-<div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-hidden="true">
-  <button class="lightbox-close" aria-label="Close">&times;</button>
-  <img id="lightboxImg" src="" alt="">
-</div>
-<script>
-  (function(){
-    const lb = document.getElementById('lightbox');
-    const lbImg = document.getElementById('lightboxImg');
-    function open(src, alt){
-      lbImg.src = src; lbImg.alt = alt || '';
-      lb.classList.add('open'); lb.setAttribute('aria-hidden', 'false');
-      document.body.style.overflow = 'hidden';
-    }
-    function close(){
-      lb.classList.remove('open'); lb.setAttribute('aria-hidden', 'true');
-      document.body.style.overflow = '';
-    }
-    document.querySelectorAll('.bento-shot').forEach(img => {
-      img.addEventListener('click', () => open(img.src, img.alt));
+  // ── accent-colour switcher: coloured dot + dropdown ──
+  (function () {
+    const PALETTES = [
+      { name: 'Den Orange',     rgb: '255,106,26', hex: 0xFF6A1A },
+      { name: 'Docker Blue',    rgb: '36,150,237', hex: 0x2496ED },
+      { name: 'AI-Slop Purple', rgb: '168,85,247', hex: 0xA855F7 },
+      { name: 'Danger Red',     rgb: '240,68,56',  hex: 0xF04438 },
+      { name: 'Matrix Green',   rgb: '34,197,94',  hex: 0x22C55E },
+    ];
+    const root = document.documentElement;
+    const btn = document.getElementById('accentSwitch');
+    const menu = document.getElementById('accentMenu');
+    if (!btn || !menu) return;
+    let current = 0;
+    PALETTES.forEach((p, idx) => {
+      const opt = document.createElement('button');
+      opt.type = 'button';
+      opt.className = 'accent-opt' + (idx === 0 ? ' active' : '');
+      opt.setAttribute('role', 'menuitemradio');
+      opt.innerHTML = '<span class="accent-opt-dot"></span><span class="accent-opt-name"></span><span class="accent-opt-check">✓</span>';
+      opt.querySelector('.accent-opt-dot').style.background = 'rgb(' + p.rgb + ')';
+      opt.querySelector('.accent-opt-name').textContent = p.name;
+      opt.addEventListener('click', () => { select(idx); closeMenu(); });
+      menu.appendChild(opt);
     });
-
-    // Seamless marquee: repeat the logo row until it's at least a viewport wide,
-    // then duplicate that base so translateX(-50%) loops with no gap or jump.
-    const track = document.getElementById('agentsTrack');
-    if (track) {
-      const unit = track.innerHTML;
-      let base = unit, guard = 0;
-      track.innerHTML = base;
-      while (track.scrollWidth < window.innerWidth * 1.2 && guard++ < 20) {
-        base += unit; track.innerHTML = base;
-      }
-      track.innerHTML = base + base;
+    const opts = [...menu.querySelectorAll('.accent-opt')];
+    function select(idx) {
+      current = idx;
+      opts.forEach((o, k) => o.classList.toggle('active', k === idx));
+      const p = PALETTES[idx];
+      root.style.setProperty('--ember-rgb', p.rgb);
+      btn.title = p.name;
+      dispatchEvent(new CustomEvent('den-accent', { detail: { hex: p.hex } }));
     }
-    lb.addEventListener('click', close);              // click backdrop or image closes
-    lb.querySelector('.lightbox-close').addEventListener('click', (e) => { e.stopPropagation(); close(); });
-    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') close(); });
+    function openMenu()  { menu.classList.add('open');  btn.setAttribute('aria-expanded', 'true'); }
+    function closeMenu() { menu.classList.remove('open'); btn.setAttribute('aria-expanded', 'false'); }
+    btn.title = PALETTES[0].name;
+    btn.addEventListener('click', (e) => { e.stopPropagation(); menu.classList.contains('open') ? closeMenu() : openMenu(); });
+    document.addEventListener('click', (e) => { if (!e.target.closest('.accent-wrap')) closeMenu(); });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeMenu(); });
   })();
 </script>
+
+<script type="module">
+  import * as THREE from 'three';
+
+  const ink = new THREE.Color(getComputedStyle(document.documentElement).getPropertyValue('--ink').trim() || '#15150F');
+  const ember = new THREE.Color(getComputedStyle(document.documentElement).getPropertyValue('--ember').trim() || '#FF6A1A');
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // A live "network-policy" visualization in clean lines: a wireframe cube (the
+  // sandbox) with a core that fires request pulses at the walls — most get
+  // BLOCKED (ring ripple), a few ESCAPE through.
+  function spinCube(stage, camZ, calloutEl, interactive) {
+    const size = () => ({ w: stage.clientWidth || 300, h: stage.clientHeight || 300 });
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
+    let { w, h } = size();
+    renderer.setSize(w, h);
+    renderer.setClearColor(0x000000, 0);
+    stage.appendChild(renderer.domElement);
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(40, w / h, 1, 100);
+    camera.position.set(0, 0, camZ);
+
+    const target = { x: 0, y: 0 }, ease = { x: 0, y: 0 };
+    let easeS = 0;
+    if (interactive) addEventListener('pointermove', (e) => {
+      target.x = (e.clientX / innerWidth - 0.5) * 2;
+      target.y = (e.clientY / innerHeight - 0.5) * 2;
+    }, { passive: true });
+
+    const grp = new THREE.Group();
+    scene.add(grp);
+    const H = 1.3;
+
+    grp.add(new THREE.LineSegments(
+      new THREE.EdgesGeometry(new THREE.BoxGeometry(H * 2, H * 2, H * 2)),
+      new THREE.LineBasicMaterial({ color: ink, transparent: true, opacity: 0.8 })
+    ));
+    const Hp = 1.12;
+    const policyEdgeMat = new THREE.LineBasicMaterial({ color: ember.clone(), transparent: true, opacity: 0.55 });
+    const policyFaceMat = new THREE.MeshBasicMaterial({ color: ember.clone(), transparent: true, opacity: 0.03, depthWrite: false, side: THREE.FrontSide });
+    grp.add(new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(Hp * 2, Hp * 2, Hp * 2)), policyEdgeMat));
+    grp.add(new THREE.Mesh(new THREE.BoxGeometry(Hp * 2, Hp * 2, Hp * 2), policyFaceMat));
+    const core = new THREE.LineSegments(
+      new THREE.WireframeGeometry(new THREE.IcosahedronGeometry(0.6, 0)),
+      new THREE.LineBasicMaterial({ color: ink, transparent: true, opacity: 0.9 })
+    );
+    grp.add(core);
+
+    let coPolys = [], coDots = [], coAnchors = [], coEntries = [];
+    if (calloutEl) {
+      coPolys = [...calloutEl.querySelectorAll('polyline')];
+      coDots  = [...calloutEl.querySelectorAll('circle')];
+      coAnchors = [[15, 33], [85, 42], [85, 66], [15, 72]];
+      const onCore = a => ({ obj: core, v: new THREE.Vector3(a[0], a[1], a[2]).normalize().multiplyScalar(0.62) });
+      coEntries = [
+        onCore([-0.5, 0.42, 0.25]),
+        onCore([0.55, 0.12, -0.15]),
+        onCore([0.45, -0.4, 0.22]),
+        { obj: grp, v: new THREE.Vector3(-Hp, -0.5, 0.45) },
+      ];
+    }
+
+    const N = 26, WIN = 5, COUNT = 4;
+    const zAxis = new THREE.Vector3(0, 0, 1);
+    const ringGeo = new THREE.BufferGeometry();
+    (() => { const segs = 48, p = []; for (let i = 0; i <= segs; i++) { const a = i / segs * Math.PI * 2; p.push(Math.cos(a), Math.sin(a), 0); } ringGeo.setAttribute('position', new THREE.Float32BufferAttribute(p, 3)); })();
+
+    const beams = [];
+    function aimBeam(b) {
+      const axis = Math.floor(Math.random() * 3), s = Math.random() < 0.5 ? -1 : 1;
+      b.blocked = Math.random() < 0.72;
+      const n = new THREE.Vector3(); n.setComponent(axis, s);
+      const end = new THREE.Vector3();
+      const wall = b.blocked ? Hp : H * 1.55;
+      const lim = (b.blocked ? Hp : H) * 0.9;
+      end.setComponent(axis, s * wall);
+      end.setComponent((axis + 1) % 3, (Math.random() * 2 - 1) * lim);
+      end.setComponent((axis + 2) % 3, (Math.random() * 2 - 1) * lim);
+      const start = end.clone().normalize().multiplyScalar(0.45);
+      const arr = b.line.geometry.attributes.position.array;
+      const tmp = new THREE.Vector3();
+      for (let i = 0; i < N; i++) { tmp.copy(start).lerp(end, i / (N - 1)); arr[i * 3] = tmp.x; arr[i * 3 + 1] = tmp.y; arr[i * 3 + 2] = tmp.z; }
+      b.line.geometry.attributes.position.needsUpdate = true;
+      b.line.material.color.copy(b.blocked ? ember : ink);
+      if (b.blocked) { b.ring.visible = true; b.ring.position.copy(end); b.ring.quaternion.setFromUnitVectors(zAxis, n); }
+      else b.ring.visible = false;
+    }
+    for (let i = 0; i < COUNT; i++) {
+      const g = new THREE.BufferGeometry();
+      g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(N * 3), 3));
+      const line = new THREE.Line(g, new THREE.LineBasicMaterial({ color: ember, transparent: true, opacity: 0.9 }));
+      grp.add(line);
+      const ringMat = new THREE.LineBasicMaterial({ color: ember, transparent: true, opacity: 0 });
+      const ring = new THREE.LineLoop(ringGeo, ringMat); ring.visible = false; grp.add(ring);
+      const b = { line, ring, ringMat, off: Math.random(), speed: 0.06 + Math.random() * 0.045, prevP: 2 };
+      aimBeam(b);
+      beams.push(b);
+    }
+
+    addEventListener('den-accent', (e) => {
+      ember.set(e.detail.hex);
+      policyEdgeMat.color.copy(ember);
+      policyFaceMat.color.copy(ember);
+      for (const b of beams) b.ringMat.color.copy(ember);
+    });
+
+    function resize() {
+      const s = size(); w = s.w; h = s.h;
+      renderer.setSize(w, h);
+      camera.aspect = w / h; camera.updateProjectionMatrix();
+    }
+    addEventListener('resize', resize, { passive: true });
+    new ResizeObserver(resize).observe(stage);
+
+    const proj = new THREE.Vector3();
+    let t = 0;
+    (function tick() {
+      if (!reduce) {
+        t += 0.016;
+        ease.x += (target.x - ease.x) * 0.05;
+        ease.y += (target.y - ease.y) * 0.05;
+        if (interactive) {
+          const prog = Math.min(1, Math.max(0, scrollY / (innerHeight * 0.9)));
+          easeS += (prog - easeS) * 0.06;
+        }
+        grp.rotation.y = t * 0.16 + ease.x * 0.5 + easeS * 0.9;
+        grp.rotation.x = -0.3 + Math.sin(t * 0.13) * 0.2 - ease.y * 0.3;
+        core.rotation.y = -t * 0.4; core.rotation.x = t * 0.26;
+        core.scale.setScalar(1 + 0.05 * Math.sin(t * 0.8));
+        if (interactive) { camera.position.set(ease.x * 0.8, -ease.y * 0.6, camZ + easeS * 3); camera.lookAt(0, 0, 0); }
+        for (const b of beams) {
+          const p = (t * b.speed + b.off) % 1;
+          if (p < b.prevP) aimBeam(b);
+          b.prevP = p;
+          if (p < 0.6) {
+            const start = Math.floor((p / 0.6) * (N - WIN));
+            b.line.geometry.setDrawRange(start, WIN);
+            b.line.material.opacity = 0.8;
+            b.ringMat.opacity = 0;
+          } else {
+            const fp = (p - 0.6) / 0.4;
+            b.line.geometry.setDrawRange(N - WIN, WIN);
+            b.line.material.opacity = 0.8 * (1 - fp);
+            if (b.blocked) { b.ring.scale.setScalar(0.06 + 0.5 * fp); b.ringMat.opacity = 0.7 * (1 - fp) * (1 - fp); }
+          }
+        }
+      }
+      renderer.render(scene, camera);
+      for (let i = 0; i < coPolys.length; i++) {
+        const e = coEntries[i];
+        proj.copy(e.v); e.obj.localToWorld(proj); proj.project(camera);
+        const mx = (proj.x * 0.5 + 0.5) * 100, my = (0.5 - proj.y * 0.5) * 100;
+        const a = coAnchors[i];
+        coPolys[i].setAttribute('points', a[0] + ',' + a[1] + ' ' + mx.toFixed(1) + ',' + my.toFixed(1));
+        coDots[i].setAttribute('cx', mx.toFixed(1)); coDots[i].setAttribute('cy', my.toFixed(1));
+      }
+      requestAnimationFrame(tick);
+    })();
+  }
+
+  const heroCube = document.getElementById('heroCube');
+  if (heroCube) spinCube(heroCube, 6.6, document.querySelector('.hero-stage .callouts'), true);
+</script>
+
 </body>
 </html>
